@@ -1,0 +1,275 @@
+<div th:fragment="saleEntryForm">
+    <div class="d-flex flex-column flex-md-row min-vh-100">
+        <main class="flex-grow-1">
+            <div class="container-fluid">
+                <header class="mb-4">
+                    <h1 class="h2 font-weight-bold text-dark">Bukl Sales Entry</h1>
+                    <p class="text-muted mt-2">Fill out the details for a new sale transaction.</p>
+                </header>
+
+                <div class="card">
+                    <div class="card-body">
+                        <form id="salesForm" th:action="@{/sale/save}" th:object="${salesForm}" method="post">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="totalAmount" class="form-label">Total Amount</label>
+                                    <input type="number" id="totalAmount" name="totalAmount" th:field="*{totalAmount}"
+                                           placeholder="Calculated automatically"
+                                           class="form-control" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="saleDate" class="form-label">Date of Sale</label>
+                                    <input type="date" id="saleDate" name="saleDate" th:field="*{saleDate}"
+                                           class="form-control" required>
+                                </div>
+                            </div>
+
+                            <h3 class="h4 mt-4 mb-3">Sales Items</h3>
+                            <div class="table-responsive mb-4">
+                                <table class="table table-bordered table-striped">
+                                    <thead class="thead-light">
+                                    <tr>
+                                        <th scope="col">Product Info</th>
+                                        <th scope="col">Quantity</th>
+                                        <th scope="col">Price</th>
+                                        <th scope="col" class="text-center">Actions</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="salesItemTableBody">
+                                    <tr th:each="item, stat : *{salesItems}" th:id="'row-' + ${stat.index}">
+                                        <td>
+                                            <div class="position-relative">
+                                                <input style="width: 15rem;" type="text" class="form-control product-search-input"
+                                                       th:field="*{salesItems[__${stat.index}__].productInfo}"
+                                                       placeholder="Search by name" required autocomplete="off" />
+                                                <input type="hidden" class="product-id-input-hidden"
+                                                       th:field="*{salesItems[__${stat.index}__].productId}" />
+                                                <div class="search-results list-group position-absolute w-100 z-1" style="display: none;">
+                                                    </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control sales-quantity-input"
+                                                   th:field="*{salesItems[__${stat.index}__].quantitySold}"
+                                                   placeholder="Quantity" min="1" required />
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control sales-price-input"
+                                                   th:field="*{salesItems[__${stat.index}__].unitPriceAtSale}"
+                                                   placeholder="Price Per Unit" min="0" step="0.01" required />
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <button th:if="${stat.index} > 0" type="button"
+                                                    class="btn btn-danger btn-sm remove-button">Remove</button>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                <button type="button" onclick="addRowOnSalesEntry()"
+                                        class="btn btn-success">
+                                    Add Item
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    Save Sale
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <template id="sales-item-row-template">
+        <tr>
+            <td>
+                <div class="position-relative">
+                    <input style="width: 15rem;" type="text" name="salesItems[INDEX_PLACEHOLDER].productInfo" placeholder="Search by name"
+                           class="form-control product-search-input" required autocomplete="off" autofocus>
+                    <input type="hidden" name="salesItems[INDEX_PLACEHOLDER].productId" class="product-id-input-hidden" />
+                    <div class="search-results list-group position-absolute w-100 z-1" style="display: none;">
+                        </div>
+                </div>
+            </td>
+            <td>
+                <input type="number" name="salesItems[INDEX_PLACEHOLDER].quantitySold" placeholder="Quantity"
+                       min="1" class="form-control sales-quantity-input" required>
+            </td>
+            <td>
+                <input type="number" name="salesItems[INDEX_PLACEHOLDER].unitPriceAtSale" placeholder="Price per unit" min="0" step="0.01"
+                       class="form-control sales-price-input" required>
+            </td>
+            <td class="text-center align-middle">
+                <button type="button" class="btn btn-danger btn-sm remove-button">Remove</button>
+            </td>
+        </tr>
+    </template>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableBody = document.getElementById('salesItemTableBody');
+            const form = document.getElementById('salesForm');
+            const totalAmountInput = document.getElementById('totalAmount');
+
+            // Function to update the total amount based on all rows
+            function updateTotalAmount() {
+                let grandTotal = 0;
+                const rows = tableBody.children;
+
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    const quantityInput = row.querySelector('.sales-quantity-input');
+                    const priceInput = row.querySelector('.sales-price-input');
+
+                    const quantity = parseFloat(quantityInput.value) || 0;
+                    const price = parseFloat(priceInput.value) || 0;
+                    
+                    // Add subtotal to grand total
+                    grandTotal += quantity * price;
+                }
+                // Update the total amount input field, rounded to 2 decimal places
+                totalAmountInput.value = grandTotal.toFixed(2);
+            }
+
+            // Function to attach event listeners to a row's inputs
+            function attachEventListeners(row) {
+                const quantityInput = row.querySelector('.sales-quantity-input');
+                const priceInput = row.querySelector('.sales-price-input');
+
+                if (quantityInput) {
+                    quantityInput.addEventListener('input', updateTotalAmount);
+                }
+                if (priceInput) {
+                    priceInput.addEventListener('input', updateTotalAmount);
+                }
+            }
+
+            // Function to initialize the search functionality for a given input field
+            function initializeSearch(input) {
+                const searchResultsContainer = input.parentNode.querySelector('.search-results');
+                const resultList = searchResultsContainer; // Bootstrap uses list-group directly
+                const priceInput = input.closest('tr').querySelector('.sales-price-input');
+                const productIdInput = input.closest('tr').querySelector('.product-id-input-hidden');
+                const quantityInput = input.closest('tr').querySelector('.sales-quantity-input');
+                input.addEventListener('input', async (e) => {
+                    const query = e.target.value;
+                    if (query.length < 2) {
+                        searchResultsContainer.style.display = 'none';
+                        return;
+                    }
+
+                    try {
+                        console.log('query '+ query)
+                        const response = await fetch(`/api/product/search?query=${query}`);
+                        const products = await response.json();
+                        console.log('products '+ JSON.stringify(products))
+                        resultList.innerHTML = '';
+                        if (products.length > 0) {
+                            products.forEach(product => {
+                                const li = document.createElement('a'); // Using <a> for Bootstrap list-group-item
+                                li.textContent = product.name;
+                                li.href = '#';
+                                li.classList.add('list-group-item', 'list-group-item-action');
+                                li.addEventListener('click', (event) => {
+                                    event.preventDefault(); // Prevent default link behavior
+                                    if(product && product.stockOnHeand && product.stockOnHeand >0 ){
+                                        input.value = product.name;
+                                        // Set the price for the selected item
+                                        if (priceInput) {
+                                            priceInput.value = product.pricePerUnit;
+                                        }
+                                        if(productIdInput){
+                                            productIdInput.value = product.id;
+                                        }
+                                        if(quantityInput){
+                                            quantityInput.placeholder = `Avl. qty-${product.stockOnHeand}`
+                                        }
+                                        searchResultsContainer.style.display = 'none';
+                                        updateTotalAmount(); // Recalculate total after price is set
+                                    }else{
+                                        alert("Stock not available..")
+                                    }
+                                    
+                                });
+                                resultList.appendChild(li);
+                            });
+                            searchResultsContainer.style.display = 'block';
+                        } else {
+                            searchResultsContainer.style.display = 'none';
+                        }
+                    } catch (error) {
+                        console.error('Error fetching products:', error);
+                        searchResultsContainer.style.display = 'none';
+                    }
+                });
+
+                // Hide search results when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!searchResultsContainer.contains(e.target) && e.target !== input) {
+                        searchResultsContainer.style.display = 'none';
+                    }
+                });
+            }
+
+            // Function to re-index all rows after a removal
+            function reindexRows() {
+                const rows = tableBody.children;
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    // Update input names with the new index
+                    row.querySelectorAll('input').forEach(input => {
+                        input.name = input.name.replace(/salesItems\[\d+\]/, `salesItems[${i}]`);
+                    });
+                    
+                    // Show or hide remove button
+                    const removeButton = row.querySelector('.remove-button');
+                    if (removeButton) {
+                        if (i === 0) {
+                            removeButton.style.display = 'none';
+                        } else {
+                            removeButton.style.display = '';
+                        }
+                    }
+                }
+            }
+            
+            // Function to add a new row to the table
+            window.addRowOnSalesEntry = function() {
+                const template = document.getElementById('sales-item-row-template');
+                const newRow = template.content.cloneNode(true).querySelector('tr');
+                const newIndex = tableBody.children.length;
+
+                // Update names of input fields with the new index
+                newRow.querySelectorAll('input').forEach(input => {
+                    input.name = input.name.replace('INDEX_PLACEHOLDER', newIndex);
+                });
+
+                // Add click handler for the remove button
+                const removeButton = newRow.querySelector('.remove-button');
+                removeButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    newRow.remove();
+                    reindexRows();
+                    updateTotalAmount(); // Recalculate total after a row is removed
+                });
+
+                tableBody.appendChild(newRow);
+                attachEventListeners(newRow); // Attach listeners to the new row
+                initializeSearch(newRow.querySelector('.product-search-input')); // Initialize search for the new row
+            };
+
+            // Initial setup: attach event listeners to existing rows and calculate total
+            const initialRows = tableBody.children;
+            for (let i = 0; i < initialRows.length; i++) {
+                attachEventListeners(initialRows[i]);
+                const searchInput = initialRows[i].querySelector('.product-search-input');
+                if (searchInput) {
+                    initializeSearch(searchInput);
+                }
+            }
+            updateTotalAmount(); // Initial calculation
+            
+        });
+    </script>
+</div>

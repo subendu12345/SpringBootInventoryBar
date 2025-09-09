@@ -1,0 +1,196 @@
+<div th:fragment="productStockDashBoard">
+    <div class="bg-light d-flex align-items-center justify-content-center  p-2">
+
+        <!-- Main Content Container -->
+        <div class="card shadow rounded w-100">
+            <div class="card-body p-2">
+                <p class="text-muted">Monitor the current stock levels of all products.</p>
+                <span class="badge badge-primary" id="totalBottoleCount"></span>
+                <span class="badge badge-success" id="totalStockAmount"></span>
+            </div>
+
+            <!-- Stock Table -->
+            <div class="p-2">
+
+                <!-- Loading Indicator -->
+                <div id="loadingIndicator" class="text-center py-5 text-muted d-none">
+                    <p>Loading stock data...</p>
+                </div>
+
+
+                <!-- Error Message -->
+                <div id="errorMessage" class="text-center py-5 text-danger d-none">
+                    <p>Failed to load stock data. Please try again later.</p>
+                </div>
+
+
+                <div class="bg-white shadow-lg text-center">
+                    <h1 class="fs-3 fw-bold text-dark mb-4">Product Stock Chart</h1>
+                    <p class="text-secondary mb-2">
+                        This chart help to find current stock.
+                    </p>
+                    <div class="bg-light rounded border" style="height: 540px;">
+                        <canvas id="stockChart" class="w-100 chart-container"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const errorMessage = document.getElementById('errorMessage');
+            const stockChartCanvas = document.getElementById('stockChart');
+            let myChart = null; // Variable to hold the chart instance
+
+            let productNames = [];
+            let stockOnHand_1 = [];
+            let backgroundColors = [];
+
+
+            // Function to fetch stock data from a hypothetical API endpoint
+            async function fetchStockData() {
+                // Show loading indicator and hide previous messages
+                loadingIndicator.classList.remove('d-none');
+                errorMessage.classList.add('d-none');
+ 
+
+                try {
+                    // Simulating a fetch call to an API endpoint
+
+                    const response = await fetch('/api/stock');
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const products = await response.json();
+                    let totalBottoleCount = 0;
+                    // Hide loading indicator
+                    loadingIndicator.classList.add('d-none');
+                    if (products.length > 0) {
+                        products.forEach(product => {
+                            // Calculate the real stock on hand
+                            const stockOnHand = product.purchaseQuantity - product.saleQuantity;
+                            totalBottoleCount += stockOnHand;
+                            const row = document.createElement('tr');
+                            const stockClass = stockOnHand > 0 ? 'text-success' : 'text-danger';
+
+                            productNames.push(product.name);
+                            stockOnHand_1.push(stockOnHand);
+                            backgroundColors.push(getRandomRgbColor());
+                        });
+                        console.log('---> ' + productNames.length)
+                        console.log('stockOnHand_1 ' + stockOnHand_1.length);
+                        document.getElementById("totalBottoleCount").textContent = 'Total Bottole Count.(' + totalBottoleCount + ')';
+                        renderStockChart()
+
+                    } else {
+                        // Display a message if no products are found
+                        
+                    }
+
+                } catch (error) {
+                    console.error("Could not fetch stock data:", error);
+                    loadingIndicator.classList.add('d-none');
+                    errorMessage.classList.remove('d-none');
+                }
+            }
+
+
+            async function fetchSalePurchaseAmount() {
+
+                const response = await fetch("/api/stock/amount")
+                const amountData = await response.json();
+                const totalStockAmount = amountData.PurchaseAmount - amountData.SaleAmount;
+                console.log('totalStockAmount  ' + totalStockAmount)
+                document.getElementById("totalStockAmount").textContent = 'Total Stock Amt.(' + totalStockAmount + ')';
+                console.log('amt ' + JSON.stringify(amountData))
+            }
+
+
+            function getRandomRgbColor() {
+                const r = Math.floor(Math.random() * 255);
+                const g = Math.floor(Math.random() * 255);
+                const b = Math.floor(Math.random() * 255);
+                return `rgba(${r}, ${g}, ${b}, 0.8)`; // Using 0.8 for transparency
+            }
+
+            // Function to create and render the chart
+            function renderStockChart() {
+                const ctx = document.getElementById('stockChart').getContext('2d');
+
+
+                const data = {
+                    labels: productNames,
+                    datasets: [{
+                        label: "Current Stock",
+                        data: stockOnHand_1,
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors.map(color => color.replace('0.8)', '1)')), // Solid border
+                        borderWidth: 1
+
+                    }]
+                };
+
+
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                display: true,
+                                color: "rgba(209, 213, 219, 0.3)" // light gray grid lines
+                            },
+                            title: {
+                                display: true,
+                                text: 'Stock Count',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Product',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false // Hide the legend since each bar is a different product
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    }
+                };
+
+
+                // Create a new chart instance
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: data,
+                    options: options
+                });
+            }
+
+            // Initial call to fetch and display the data
+            fetchStockData();
+            fetchSalePurchaseAmount();
+        });
+    </script>
+</div>
