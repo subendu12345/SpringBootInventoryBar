@@ -66,8 +66,9 @@ public class ProductStockController {
 
     @GetMapping("/stock/amount")
     public ResponseEntity<Map<String, BigDecimal>> getCurrentStockAmt(){
+        System.out.println("saleItemService "+ saleItemService.getTotalSaleAmount());
         Map<String, BigDecimal> jsonResponse = Map.of(
-            "SaleAmount", saleItemService.getTotalSaleAmount().TotalSaleAmount(),
+            "SaleAmount", saleItemService.getTotalSaleAmount().TotalSaleAmount() != null ? saleItemService.getTotalSaleAmount().TotalSaleAmount() : BigDecimal.ZERO,
             "PurchaseAmount", purchaseEntryItemService.getTotalPurchesAmount().TotalPurchaseAmt()
             );
         return new ResponseEntity<>(jsonResponse, HttpStatus.FOUND);

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.thymeleaf.org" th:replace="base::layout('Bar-managment', ~{::section})">
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Price Chart</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+
+    <style>
+        .table-card {
+            background-color: #f0f0f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .table-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-number {
+            font-size: 3rem;
+            font-weight: 700;
+        }
+
+        .scrollable-list {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<section>
+    <div th:replace="/utill/MessageShow.html :: toast"></div>
+    <!-- Main Container for Table Grid -->
+    <h3 class="fw-bold text-center ">Bar Management System</h3>
+    <p class="text-secondary text-center mb-1">
+        Select a table to manage its order.
+    </p>
+
+
+    <div class="text-center">
+
+        <div class="row">
+
+            <div class="col-2">
+                <div class="card" style="width: 18rem; margin: 5%;">
+                    <div class="card-header">
+                        Table List
+                    </div>
+                    <div id="tableGrid" class="row">
+
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="col-6">
+                <!-- this grid help to display transction history -->
+
+                <div th:replace="/bar/transctionHistory.html :: transctionHistory"></div>
+            </div>
+
+             <div class="col-4">
+                
+               <div class="card" style="margin-top: 1rem;">
+                <div class="card-header">
+                        Counter Stock
+                    </div>
+               </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Table Details -->
+    <div class="modal fade" id="tableModal" tabindex="-1" aria-labelledby="tableModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tableModalLabel">Table Details: #<span id="modalTableNumber"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="transctionForm">
+                        <input type="hidden" id="currentTableId">
+
+                        <h6 class="fw-bold">Current Order</h6>
+                        <div class="table-responsive rounded-3 border mb-3">
+                            <table class="table table-hover mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th scope="col">Item</th>
+                                        <th scope="col">Size</th>
+                                        <th scope="col">Price</th>
+                                        <th scope="col">Qty</th>
+                                        <th scope="col">Total</th>
+                                        <th scope="col">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orderTableBody">
+                                    <!-- Order items will be rendered here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-end mb-4">
+                            <button type="button" class="btn btn-outline-primary" id="toggleAddItem">
+                                Add Item
+                            </button>
+                        </div>
+
+                        <!-- Add Item Section (initially hidden) -->
+                        <div id="addItemSection">
+                            <h6 class="fw-bold">Add Custom Item</h6>
+                            <div class="row mb-3">
+                                <div class="col-md-3 mb-3">
+                                    <input type="text" id="extraItemName" class="form-control" placeholder="Item Name">
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <input type="text" id="extraItemSize" class="form-control" placeholder="Size">
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <input type="number" step="0.01" id="extraItemPrice" class="form-control"
+                                        placeholder="Price">
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <input type="number" id="extraItemQty" class="form-control" value="1" min="1"
+                                        placeholder="Quantity">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <button type="button" class="btn btn-success" id="addExtraItemBtn">Add Extra
+                                        Item</button>
+                                </div>
+                            </div>
+                            <h6 class="fw-bold">Select an Item</h6>
+                            <div class="mb-3">
+                                <input type="text" id="productSearchInput" class="form-control"
+                                    placeholder="Search product by name...">
+                            </div>
+                            <div class="table-responsive rounded-3 border scrollable-list">
+                                <table class="table table-hover mb-0">
+                                    <thead class="bg-light sticky-top">
+                                        <tr>
+                                            <th scope="col">Product Name</th>
+                                            <th scope="col">Size</th>
+                                            <th scope="col">Price</th>
+                                            <th scope="col">Quantity</th>
+                                            <th scope="col">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="priceChartTableBody">
+                                        <!-- Price chart data will be rendered here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 my-4">
+                            <div class="col-md-4">
+                                <label for="discount" class="form-label">Discount</label>
+                                <input type="number" step="0.01" class="form-control" id="discount" value="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="totalAmount" class="form-label">Total Amount</label>
+                                <input type="number" class="form-control" id="totalAmount" disabled>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="discountAmount" class="form-label">Discount Amount</label>
+                                <input type="number" class="form-control" id="discountAmount" disabled>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">Submit and Pay</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+
+            const tables = [
+                { id: 1, number: 1, color: '#18cbc3' },  // teal
+                { id: 2, number: 2, color: '#ff6b6b' },  // coral red
+                { id: 3, number: 3, color: '#4dabf7' },  // sky blue
+                { id: 4, number: 4, color: '#ffd93d' },  // golden yellow
+                { id: 5, number: 5, color: '#6a4c93' },  // purple
+                { id: 6, number: 6, color: '#38b000' },  // green
+                { id: 7, number: 7, color: '#f3722c' },  // orange
+                { id: 8, number: 8, color: '#7209b7' },  // violet
+                { id: 9, number: 9, color: '#3a86ff' },  // bright blue
+                { id: 10, number: 10, color: '#ff006e' } // pink
+            ];
+            // State management for draft orders
+            let draftOrders = {};
+            let currentTableId = null;
+            let tableModal;
+            let priceChartData = []
+            let tempPriceChartData = [];
+
+
+            function generateRandomId(length = 8) {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                let id = '';
+                for (let i = 0; i < length; i++) {
+                    id += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return id;
+            }
+
+            async function fetchPriceChartList() {
+                const res = await fetch("/api/pricehart/get");
+                priceChartData = await res.json();
+                tempPriceChartData = priceChartData;
+
+            }
+
+
+            // --- UI Rendering Functions ---
+
+            function renderTableGrid() {
+                const gridContainer = document.getElementById('tableGrid');
+                gridContainer.innerHTML = '';
+                tables.forEach(table => {
+                    const col = document.createElement('div');
+                    col.classList.add('col-12', 'col-md-12', 'col-lg-12');
+                    col.innerHTML = `
+                    <div class="card table-card rounded-4 shadow-sm" style="margin: 3%; background-color:${table.color}; cursor: pointer;" data-table-id="${table.id}">
+                        <h3 class="table-number">Table-${table.number}</h3>
+                    </div>
+                `;
+                    col.querySelector('.table-card').addEventListener('click', () => openTableModal(table.id));
+                    gridContainer.appendChild(col);
+                });
+            }
+
+            function renderOrderItems() {
+                const tableBody = document.getElementById('orderTableBody');
+                tableBody.innerHTML = '';
+
+                if (!draftOrders[currentTableId] || draftOrders[currentTableId].length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No items added yet.</td></tr>`;
+                    document.getElementById('totalAmount').value = '0.00';
+                    updateTotalAndDiscount();
+                    return;
+                }
+
+                let total = 0;
+                draftOrders[currentTableId].forEach((item, index) => {
+                    const subtotal = item.price * item.quantity;
+                    total += subtotal;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                    <td class="align-middle">${item.productName}</td>
+                    <td class="align-middle">${item.size==0 ? item.extraSize : item.size +"ml"}</td>
+                    <td class="align-middle">${item.price.toFixed(2)}</td>
+                    <td class="align-middle">${item.quantity}</td>
+                    <td class="align-middle">${subtotal.toFixed(2)}</td>
+                    <td class="align-middle">
+                        <button type="button" class="btn btn-sm btn-outline-danger delete-item-btn" data-index="${index}">Remove</button>
+                    </td>
+                `;
+                    tableBody.appendChild(row);
+                });
+                document.getElementById('totalAmount').value = total.toFixed(2);
+
+                // Attach event listeners for the new "Remove" buttons
+                document.querySelectorAll('.delete-item-btn').forEach(button => {
+                    button.addEventListener('click', handleRemoveItem);
+                });
+                updateTotalAndDiscount();
+            }
+
+            function renderPriceChartTable(data) {
+                const tableBody = document.getElementById('priceChartTableBody');
+                tableBody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No products found.</td></tr>`;
+                    return;
+                }
+
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                    <td class="align-middle">${item.productName}</td>
+                    <td class="align-middle">${item.size}ml</td>
+                    <td class="align-middle">${item.price.toFixed(2)}</td>
+                    <td class="align-middle">
+                        <input type="number" class="form-control form-control-sm item-qty-input" value="1" min="1" data-id="${item.id}">
+                    </td>
+                    <td class="align-middle">
+                        <button type="button" class="btn btn-sm btn-success add-item-btn" data-id="${item.id}">Add</button>
+                    </td>
+                `;
+                    tableBody.appendChild(row);
+                });
+
+                // Attach event listeners to the new "Add" buttons
+                document.querySelectorAll('.add-item-btn').forEach(button => {
+                    button.addEventListener('click', handleAddItem);
+                });
+            }
+
+            // --- Event Handlers ---
+
+            function openTableModal(tableId) {
+                currentTableId = tableId;
+                document.getElementById('modalTableNumber').textContent = tables.find(t => t.id === tableId).number;
+                document.getElementById('currentTableId').value = tableId;
+
+                if (!draftOrders[tableId]) {
+                    draftOrders[tableId] = [];
+                }
+
+                renderOrderItems();
+                renderPriceChartTable(priceChartData); // Render the product list on modal open
+                //document.getElementById('addItemSection').classList.add('d-none'); // Hide the section by default
+                //document.getElementById('addItemSection').classList.toggle('d-none');
+                tableModal.show();
+            }
+
+            function handleRemoveItem(event) {
+                const indexToRemove = parseInt(event.target.dataset.index);
+                if (draftOrders[currentTableId]) {
+                    draftOrders[currentTableId].splice(indexToRemove, 1);
+                    renderOrderItems(); // Re-render the table to reflect the change
+                }
+            }
+
+
+            function handleAddExtraItem() {
+                const name = document.getElementById('extraItemName').value.trim();
+                const extraSize = document.getElementById('extraItemSize').value.trim();
+                const price = parseFloat(document.getElementById('extraItemPrice').value);
+                const quantity = parseInt(document.getElementById('extraItemQty').value);
+
+                if (!name || !extraSize || isNaN(price) || isNaN(quantity) || quantity <= 0) {
+                    showToast("Warning!",'Please fill all fields.', "warning")
+                    return;
+                }
+
+                const newItem = {
+                    id: 'extra-' + generateRandomId(),
+                    productName: name,
+                    extraSize: extraSize,
+                    size:0,
+                    price: price,
+                    quantity: quantity,
+                    isExtraItem: true
+                };
+
+                if (draftOrders[currentTableId]) {
+                    draftOrders[currentTableId].push(newItem);
+                    renderOrderItems();
+                    // Clear the input fields for the next entry
+                    document.getElementById('extraItemName').value = '';
+                    document.getElementById('extraItemSize').value = '';
+                    document.getElementById('extraItemPrice').value = '';
+                    document.getElementById('extraItemQty').value = '1';
+                }
+            }
+
+            function handleAddItem(event) {
+                console.log('--------handleAddItem calling.....-------')
+                const itemId = parseInt(event.target.dataset.id);
+                const quantityInput = document.querySelector(`.item-qty-input[data-id="${itemId}"]`);
+                const quantity = parseInt(quantityInput.value);
+
+                if (isNaN(quantity) || quantity <= 0) {
+                    // Use a modal or in-line message instead of alert()
+                    console.log("Please enter a valid quantity.");
+                    return;
+                }
+
+                const selectedItem = tempPriceChartData.find(item => item.id === itemId);
+
+                if (selectedItem) {
+                    const existingItem = draftOrders[currentTableId].find(item => item.id === itemId);
+                    if (existingItem) {
+                        existingItem.quantity += quantity;
+                    } else {
+                        draftOrders[currentTableId].push({ ...selectedItem, quantity: quantity, isExtraItem: false });
+                    }
+
+                    renderOrderItems(); // Re-render the order table
+                }
+            }
+
+            function updateTotalAndDiscount() {
+                const totalAmountInput = document.getElementById('totalAmount');
+                const discountPercentageInput = document.getElementById('discount');
+                const discountAmountInput = document.getElementById('discountAmount');
+
+                const totalAmount = parseFloat(totalAmountInput.value) || 0;
+                const discountPercentage = parseFloat(discountPercentageInput.value) || 0;
+
+                const discountAmount = totalAmount - discountPercentage;
+                discountAmountInput.value = discountAmount.toFixed(2);
+            }
+
+            function handleTransctionSubmit(event) {
+                event.preventDefault();
+                const form = event.target;
+                const tableId = parseInt(document.getElementById('currentTableId').value);
+                const totalAmount = parseFloat(document.getElementById('totalAmount').value);
+                const discount = parseFloat(document.getElementById('discount').value);
+
+                const transactionData = {
+                    tableNo: tables.find(t => t.id === tableId).number,
+                    totalAmount: totalAmount,
+                    discountAmount: (totalAmount - discount).toFixed(2),
+                    discount: discount,
+                    items: draftOrders[tableId]
+                };
+
+                console.log("Submitting Transaction:", transactionData);
+
+                //delete draftOrders[tableId];
+                saveTransction(transactionData);
+                tableModal.hide();
+            }
+
+            async function saveTransction(transctionObj) {
+                try {
+                    const res = await fetch("/api/transction/save",
+                        {
+                            method: "POST",
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(transctionObj)
+                        }
+                    )
+                    const resPonse = await res.json();
+                    if (resPonse && resPonse.message == 'success') {
+                        showToast('Record Saved!', 'Record Successfully Saved.', 'success');
+                    } else {
+                        showToast('Error on save record!', resPonse.message, 'error');
+                    }
+
+                    console.log('trnasction save ' + JSON.stringify(resPonse))
+                } catch (error) {
+                    showToast('Error on save record!', JSON.stringify(error), 'error');
+                    console.log('trnasction save error ' + JSON.stringify(error))
+                }
+            }
+
+
+            function debounce(func, delay) {
+                let timeout;
+                return function (...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), delay);
+                };
+            }
+
+            const debouncedSearch = debounce(handleProductSearch, 300);
+
+            async function handleProductSearch(event) {
+                try {
+                    const searchTerm = event.target.value.toLowerCase();
+                    if (searchTerm && searchTerm.length > 2) {
+                        const res = await fetch("/api/priceChart/search/" + searchTerm)
+                        const result = await res.json();
+                        console.log('price chart found ' + JSON.stringify(result))
+                        // const filteredData = priceChartData.filter(item =>
+                        //     item.productName.toLowerCase().includes(searchTerm)
+                        // );
+                        tempPriceChartData = result;
+                        renderPriceChartTable(result);
+                    } else {
+                        renderPriceChartTable(priceChartData)
+                    }
+                } catch (error) {
+                    console.log('esrro ' + JSON.stringify(error))
+                }
+
+
+            }
+
+            function toggleAddItemSection() {
+                document.getElementById('addItemSection').classList.toggle('d-none');
+            }
+
+
+            function showToast(title, message, type = "primary") {
+                // Get toast elements
+                const toastEl = document.getElementById("basicToast");
+                const toastTitle = document.getElementById("myToastTitle");
+                const toastMessage = document.getElementById("myToastMessage");
+                const header = toastEl.querySelector(".toast-header");
+
+                // Set values
+                toastTitle.textContent = title;
+                toastMessage.textContent = message;
+
+                // Update color (Bootstrap contextual classes)
+                header.className = `toast-header bg-${type} text-light`;
+
+                // Show toast
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show();
+            }
+
+            // --- Initialization on page load ---
+            fetchPriceChartList()
+            renderTableGrid();
+            document.getElementById('productSearchInput').addEventListener('input', debouncedSearch);
+            document.getElementById('transctionForm').addEventListener('submit', handleTransctionSubmit);
+            document.getElementById('toggleAddItem').addEventListener('click', toggleAddItemSection);
+            document.getElementById('discount').addEventListener('input', updateTotalAndDiscount);
+            document.getElementById('addExtraItemBtn').addEventListener('click', handleAddExtraItem);
+            tableModal = new bootstrap.Modal(document.getElementById('tableModal'));
+
+        })
+    </script>
+
+</section>

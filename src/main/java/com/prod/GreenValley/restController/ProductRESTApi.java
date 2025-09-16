@@ -81,4 +81,9 @@ public class ProductRESTApi {
     public List<PriceBookDTO> getPriceBookByProductId(@PathVariable("id") Long productId){
         return productService.getPriceBooksByProductId(productId);
     }
+
+    @GetMapping("/get/getuniquenames")
+    public List<String> getProductUniqueNames(){
+        return productService.findAllDistinctProductNames();
+    }
 }

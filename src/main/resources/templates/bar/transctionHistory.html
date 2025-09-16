@@ -1,0 +1,238 @@
+
+<div class="transction-history-main-div" th:fragment="transctionHistory">
+
+    <div class="container print-area">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Table No</th>
+                    <th scope="col">Total Amount</th>
+                    <th scope="col">Discount</th>
+                    <th scope="col">Discount Amount</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="transactions-table-body">
+                <!-- Transaction rows will be dynamically populated here -->
+            </tbody>
+        </table>
+
+        <!-- Loading spinner -->
+        <div id="loading-spinner" class="d-flex justify-content-center mt-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Transaction Items Details -->
+    <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailsModalLabel">Transaction Items</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Product Name</th>
+                                <th scope="col">Size</th>
+                                <th scope="col">Price</th>
+                                <th scope="col">Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-table-body">
+                            <!-- Items will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tableBody = document.getElementById('transactions-table-body');
+            const itemsTableBody = document.getElementById('items-table-body');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            let tempTransctionData =[];
+
+
+                          /**
+             * Function to print a single transaction as a receipt.
+             * @param {Object} transaction The transaction object to print.
+             */
+                        function printSingleTransaction(transaction) {
+                console.log('transaction ' + JSON.stringify(transaction));
+                const printWindow = window.open('', '', 'height=288,width=388');
+                printWindow.document.write('<html><head><title>Transaction Receipt</title>');
+                printWindow.document.write('<style>');
+                printWindow.document.write('body { font-family: Arial, sans-serif; margin: 0; padding: 10px; position: relative; font-size: 10px; }');
+                printWindow.document.write('body::after {');
+                printWindow.document.write('    content: "' + transaction.transId + '";');
+                printWindow.document.write('    position: fixed;');
+                printWindow.document.write('    top: 50%;');
+                printWindow.document.write('    left: 50%;');
+                printWindow.document.write('    transform: translate(-50%, -50%) rotate(-45deg);');
+                printWindow.document.write('    font-size: 2em;');
+                printWindow.document.write('    color: rgba(0, 0, 0, 0.05);');
+                printWindow.document.write('    z-index: -1;');
+                printWindow.document.write('    pointer-events: none;');
+                printWindow.document.write('}');
+                printWindow.document.write('h3 { text-align: center; color: #333; font-size: 1.2em; margin-bottom: 10px; }');
+                printWindow.document.write('strong { color: #555; }');
+                printWindow.document.write('p { margin: 2px 0; }');
+                printWindow.document.write('</style>');
+                printWindow.document.write('</head><body>');
+                printWindow.document.write('<div style="padding: 10px;">');
+                printWindow.document.write('<h3 style="margin-bottom: 10px;">Transaction Receipt</h3>');
+                printWindow.document.write('<p><strong>Transaction ID:</strong> ' + transaction.transId + '</p>');
+                printWindow.document.write('<p><strong>Table No:</strong> ' + transaction.tableNo + '</p>');
+                printWindow.document.write('<p><strong>Date:</strong> ' + transaction.transctionDate || '' + '</p>');
+                printWindow.document.write('<p><strong>Total Amount:</strong> $' + transaction.totalAmount.toFixed(2) + '</p>');
+                printWindow.document.write('<p><strong>Discount:</strong> ' + transaction.discount + '</p>');
+                printWindow.document.write('<p><strong>Discount Amount:</strong> $' + transaction.discountAmount.toFixed(2) + '</p>');
+                // printWindow.document.write('<p><strong>Total Volume:</strong> ' + transaction.totalVolume + '</p>');
+                printWindow.document.write('<h4 style="margin-top: 15px; font-size: 1em;">Items:</h4>');
+                
+                if (transaction.items && transaction.items.length > 0) {
+                    printWindow.document.write('<div style="margin-top: 10px;">');
+                    transaction.items.forEach(item => {
+                        printWindow.document.write(`<p> ${item.productName} ${item.size == 0 ? item.extraSize : item.size} ${item.isExtraItem ? '':'ml'} x ${item.quantity} = ${item.isExtraItem ? item.extraSize :(item.size * item.quantity)+'ml' }</p>`);
+                    });
+                    printWindow.document.write('</div>');
+                } else {
+                    printWindow.document.write('<p style="text-align: center;">No items for this transaction.</p>');
+                }
+
+                printWindow.document.write('</div></body></html>');
+                printWindow.document.close();
+                printWindow.print();
+            }
+
+
+            // Function to fetch and display transactions
+            async function fetchTransactions() {
+                try {
+                    // Show loading spinner
+                    loadingSpinner.style.display = 'flex';
+                    
+                    // Fetch data from the backend API
+                    const response = await fetch('/api/transction/all');
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    const transactions = await response.json();
+                    tempTransctionData = transactions;
+                    console.log('transactions  '+ JSON.stringify(transactions))
+                    // Hide loading spinner
+                    loadingSpinner.style.setProperty('display', 'none', 'important');
+
+                    // Clear the table before populating
+                    tableBody.innerHTML = '';
+
+                    // Populate the table with transactions
+                    if (transactions.length > 0) {
+                        transactions.forEach(transaction => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${transaction.transId}</td>
+                                <td>${transaction.tableNo}</td>
+                                
+                                <td>${transaction.totalAmount.toFixed(2)}</td>
+                                <td>${transaction.discount.toFixed(2)}</td>
+                                <td>${transaction.discountAmount.toFixed(2)}</td>
+                                <td>${transaction.transctionDate || ''}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-info view-details-btn" data-bs-toggle="modal" data-bs-target="#detailsModal" data-items='${JSON.stringify(transaction.items)}'>
+                                        View Details
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary print-single-btn" data-id='${transaction.transId}'>
+                                            Print
+                                    </button>
+                                </td>
+                            `;
+                            tableBody.appendChild(row);
+                        });
+
+                        // Add event listener to each "View Details" button
+                        const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+                        document.querySelectorAll('.view-details-btn').forEach(button => {
+                            button.addEventListener('click', function() {
+                                const items = JSON.parse(this.dataset.items);
+                                populateItemsModal(items);
+                            });
+                        });
+                        document.querySelectorAll('.print-single-btn').forEach(button => {
+                            button.addEventListener('click', function() {
+                                const transactionId = JSON.parse(this.dataset.id);
+                                console.log('print calling.. '+transactionId)
+                                const transById = tempTransctionData.find(trns => trns.transId === transactionId);
+                                console.log('transById ', JSON.stringify(transById))
+                                printSingleTransaction(transById);
+                            });
+                        });
+                    } else {
+                        loadingSpinner.style.setProperty('display', 'none', 'important');
+                        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No transactions found.</td></tr>';
+                    }
+
+                } catch (error) {
+                    console.error('Error fetching transactions:', error);
+                    loadingSpinner.style.setProperty('display', 'none', 'important');
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Failed to load transactions.</td></tr>';
+                }
+            }
+
+            // Function to populate the modal with transaction items
+            function populateItemsModal(items) {
+                itemsTableBody.innerHTML = ''; // Clear previous items
+                if (items.length > 0) {
+                    items.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.productName}</td>
+                            <td>${item.size == 0 ? item.extraSize : item.size}</td>
+                            <td>${item.price}</td>
+                            <td>${item.quantity}</td>
+                        `;
+                        itemsTableBody.appendChild(row);
+                    });
+                } else {
+                    itemsTableBody.innerHTML = '<tr><td colspan="4" class="text-center">No items for this transaction.</td></tr>';
+                }
+            }
+
+            // Initial fetch of transactions when the page loads
+            fetchTransactions();
+        });
+    </script>
+
+    <style>
+        .container {
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+        }
+        @media print {
+            .transction-history-main-div * {
+                visibility: hidden;
+            }
+            .print-area, .print-area * {
+                visibility: visible;
+            }
+            .print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+        }
+    </style>
+</div>

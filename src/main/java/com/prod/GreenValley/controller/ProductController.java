@@ -49,7 +49,8 @@ public class ProductController {
         List<Product> products = productForm.getProducts();
         System.out.println("product list "+ products);
         for(Product prd : products){
-            prd.setName(prd.getName() + prd.getVolumeMl().toString());
+            prd.setBrand(prd.getName());
+            prd.setName(prd.getName() +"-"+ prd.getVolumeMl().toString()+"_ML");
         }
         String message = productService.doInsertProducts(products);
         if(message=="success"){
@@ -82,5 +83,7 @@ public class ProductController {
         }
         return "redirect:/products"; // Redirect if product not found.
     }
+
+    
 
 }

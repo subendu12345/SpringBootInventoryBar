@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.prod.GreenValley.DTO.PriceBookDTO;
 import com.prod.GreenValley.DTO.PriceBookRecordDTO;
+import com.prod.GreenValley.DTO.PriceChartDTO;
 import com.prod.GreenValley.Entities.PriceBook;
 import com.prod.GreenValley.Entities.Product;
 import com.prod.GreenValley.repository.PriceBookRepo;
@@ -82,5 +83,9 @@ public class PricaeBookService {
         }
         System.out.println("----> product Name "+priceBookDTOs.size());
         return priceBookDTOs;
+    }
+
+    public List<Object[]> getSearchResult(String name){
+        return priceBookRepo.findPriceBookByProductName(name);
     }
 }

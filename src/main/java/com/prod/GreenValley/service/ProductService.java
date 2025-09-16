@@ -42,6 +42,10 @@ public class ProductService {
         return productRepo.findAll();
     }
 
+    public List<String> findAllDistinctProductNames(){
+        return productRepo.findAllDistinctProductNames();
+    }
+
     public Product findProductById(Long id) {
         return productRepo.findById(id).orElse(null);
     }

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.thymeleaf.org" th:replace="base::layout('Price Chart', ~{::section})">
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Price Chart</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <style>
+        section {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .main-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* New class for the scrollable form section */
+        .scrollable-form {
+            max-height: 400px;
+            /* Set a fixed height */
+            overflow-y: auto;
+            /* Enable vertical scrolling */
+            padding-right: 15px;
+            /* Add some padding to prevent the scrollbar from touching the content */
+        }
+    </style>
+</head>
+<section>
+    <div class="">
+        <div th:replace="/utill/MessageShow.html :: toast"></div>
+        <div class="card shadow-lg">
+            <div class="card-header text-center bg-primary text-white">
+                <h3 class="mb-0"><i class="fas fa-chart-line"></i> Price Chart Manager</h3>
+
+            </div>
+
+            <div class="main-container">
+                <div class="add-bulk-add-button" style="float: right; margin: 13px;">
+                    <button type="button" class="btn btn-primary btn-lg" id="bulkAddPriceCharts" data-bs-toggle="modal"
+                        data-bs-target="#priceChartModal">
+                        Bulk Add Price Charts
+                    </button>
+                </div>
+
+                <div class="card p-4 shadow-lg">
+                    <div class="mb-3 d-flex justify-content-between align-items-center">
+                        <input type="text" id="searchInput" class="form-control me-2"
+                            placeholder="Search by product name..." />
+                    </div>
+
+                    <div class="table-responsive rounded-3 border">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light sticky-top">
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Product Name</th>
+                                    <th scope="col">Size</th>
+                                    <th scope="col">Price</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="priceChartTableBody">
+                                <!-- Table rows will be rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editModalLabel">Edit Price Chart Record</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="editForm">
+                        <div class="modal-body">
+                            <input type="hidden" id="editId" />
+                            <div class="mb-3">
+                                <label for="editProductName" class="form-label">Product Name</label>
+                                <input type="text" class="form-control" id="editProductName" disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editSize" class="form-label">Size</label>
+                                <input type="number" class="form-control" id="editSize" disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editPrice" class="form-label">Price</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrice" required>
+                                <div class="invalid-feedback">
+                                    Please enter a valid price.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Insert Modal -->
+        <div class="modal fade" id="priceChartModal" tabindex="-1" aria-labelledby="priceChartModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="priceChartModalLabel">Bulk Add Price Charts</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-secondary text-center mb-4">
+                            Please fill in the price for both 30ml and 60ml sizes for each product.
+                        </p>
+                        <form id="priceChartForm">
+                            <!-- The scrollable container for the product forms -->
+                            <div id="productFormsContainer" class="scrollable-form"
+                                style="max-height: 400px; overflow-y: auto;">
+                                <!-- Dynamic product forms will be rendered here -->
+                            </div>
+
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg">Submit Price Charts</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer d-none" id="statusMessageContainer">
+                        <div id="statusMessage" class="alert alert-success d-none w-100" role="alert">
+                            Price Chart records submitted successfully! Check the console for the data.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Dummy data for 10 products, simulating a backend API call
+            let productUniqeNames = [];
+            let priceChartData = [];
+            // Function to render the table with provided data
+            function renderTable(data) {
+                const tableBody = document.getElementById('priceChartTableBody');
+                tableBody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No data available.</td></tr>`;
+                    return;
+                }
+
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                    <td class="align-middle">${item.id}</td>
+                    <td class="align-middle">${item.productName}</td>
+                    <td class="align-middle">${item.size}ml</td>
+                    <td class="align-middle">$${item.price.toFixed(2)}</td>
+                    <td class="align-middle">
+                        <button class="btn btn-sm btn-outline-primary me-2 edit-btn" data-id="${item.id}">Edit</button>
+                        <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${item.id}">Delete</button>
+                    </td>
+                `;
+                    tableBody.appendChild(row);
+                });
+
+                // Attach event listeners to the new buttons
+                document.querySelectorAll('.edit-btn').forEach(button => {
+                    button.addEventListener('click', handleEditClick);
+                });
+                document.querySelectorAll('.delete-btn').forEach(button => {
+                    button.addEventListener('click', handleDeleteClick);
+                });
+            }
+
+            // Handle Edit button click
+            function handleEditClick(event) {
+                const id = parseInt(event.target.dataset.id);
+                const itemToEdit = priceChartData.find(item => item.id === id);
+
+                if (itemToEdit) {
+                    // Populate the modal with the selected item's data
+                    document.getElementById('editId').value = itemToEdit.id;
+                    document.getElementById('editProductName').value = itemToEdit.productName;
+                    document.getElementById('editSize').value = itemToEdit.size;
+                    document.getElementById('editPrice').value = itemToEdit.price;
+
+                    myModal.show();
+                }
+            }
+
+
+            // Handle form submission for the edit modal
+            function handleEditFormSubmit(event) {
+                event.preventDefault();
+                const form = event.target;
+                const priceInput = document.getElementById('editPrice');
+
+                // Basic validation
+                if (!priceInput.value.trim() || isNaN(priceInput.value.trim())) {
+                    priceInput.classList.add('is-invalid');
+                    return;
+                } else {
+                    priceInput.classList.remove('is-invalid');
+                }
+
+                const id = parseInt(document.getElementById('editId').value);
+                const newPrice = parseFloat(priceInput.value.trim());
+
+                // In a real app, you'd send an UPDATE request to your backend
+                console.log(`Updating record ID ${id} with new price: ${newPrice}`);
+
+                // To reflect changes in the UI, you would then re-fetch the data or update the local array
+                const itemToUpdate = priceChartData.find(item => item.id === id);
+                if (itemToUpdate) {
+                    itemToUpdate.price = newPrice;
+                }
+                renderTable(priceChartData); // Re-render the table with the updated data
+                myModal.hide(); // Hide the modal
+            }
+
+
+            // Filter functionality
+            function handleSearchInput(event) {
+                const searchTerm = event.target.value.toLowerCase();
+                const filteredData = priceChartData.filter(item =>
+                    item.productName.toLowerCase().includes(searchTerm)
+                );
+                renderTable(filteredData);
+            }
+
+            // Handle Delete button click
+            function handleDeleteClick(event) {
+                const id = parseInt(event.target.dataset.id);
+                // In a real application, you would send a DELETE request to your backend here
+                console.log(`Deleting record with ID: ${id}`);
+            }
+
+
+            document.getElementById("bulkAddPriceCharts").addEventListener("click", () => {
+                featchProductUniqueNames()
+                console.log('bulkAddPriceCharts clicked')
+            })
+
+            async function featchProductUniqueNames() {
+                try {
+                    const response = await fetch("/products/api/get/getuniquenames")
+                    const uniqueNames = await response.json();
+                    for (let index = 0; index < uniqueNames.length; index++) {
+                        productUniqeNames.push({
+                            name: uniqueNames[index],
+                            id: index
+                        })
+
+                    }
+                    renderFormFields()
+                } catch (error) {
+                    showToast('Error to find product name', JSON.stringify(error), 'error')
+                }
+
+            }
+
+            // Function to create and render the form fields dynamically
+            function renderFormFields() {
+                console.log('productUniqeNames ' + JSON.stringify(productUniqeNames))
+                const container = document.getElementById('productFormsContainer');
+                let formHtml = '';
+                let productNameIndex = 111;
+                productUniqeNames.forEach(product => {
+                    formHtml += `
+                    <div class="card bg-light mb-3">
+                        <div class="card-header fw-bold">${product.name}</div>
+                        <div class="card-body">
+                            <input type="hidden" name="productId" value="${product.id}">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="price-${product.id}-30ml" class="form-label">Price (30ml)</label>
+                                    <input type="hidden" name="size" value="30">
+                                    <input type="number" step="0.01" class="form-control" id="price-${product.id}-30ml" name="price-30ml" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a valid price for 30ml.
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="price-${product.id}-60ml" class="form-label">Price (60ml)</label>
+                                    <input type="hidden" name="size" value="60">
+                                    <input type="number" step="0.01" class="form-control" id="price-${product.id}-60ml" name="price-60ml" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a valid price for 60ml.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                });
+
+                container.innerHTML = formHtml;
+            }
+
+            // Form validation and submission logic
+            function handleFormSubmit(event) {
+                // Prevent the default form submission behavior
+                event.preventDefault();
+
+                const form = event.target;
+                let isValid = true;
+                const priceCharts = [];
+                const statusMessageContainer = document.getElementById('statusMessageContainer');
+                const statusMessage = document.getElementById('statusMessage');
+
+                // Reset validation states
+                form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                statusMessageContainer.classList.add('d-none');
+                statusMessage.classList.add('d-none');
+
+                // Iterate over each product card to validate inputs
+                productUniqeNames.forEach(product => {
+                    const price30mlInput = document.getElementById(`price-${product.id}-30ml`);
+                    const price60mlInput = document.getElementById(`price-${product.id}-60ml`);
+                    console.log('---------------------- ')
+                    let productValid = true;
+
+                    // Validate 30ml price
+                    if (!price30mlInput.value.trim() || isNaN(price30mlInput.value.trim())) {
+                        price30mlInput.classList.add('is-invalid');
+                        isValid = false;
+                        productValid = false;
+                    }
+
+                    // Validate 60ml price
+                    if (!price60mlInput.value.trim() || isNaN(price60mlInput.value.trim())) {
+                        price60mlInput.classList.add('is-invalid');
+                        isValid = false;
+                        productValid = false;
+                    }
+
+                    // If the product fields are valid, add them to the array
+                    if (productValid) {
+                        priceCharts.push({
+                            productName: product.name,
+                            size: 30,
+                            price: parseFloat(price30mlInput.value.trim())
+                        });
+                        priceCharts.push({
+                            productName: product.name,
+                            size: 60,
+                            price: parseFloat(price60mlInput.value.trim())
+                        });
+                    }
+                });
+
+                // If the form is valid, process the data
+                if (isValid) {
+                    // Here you would typically send `priceCharts` data to your backend
+                    // using a fetch() or similar method.
+                    console.log("Submitting Price Charts:", priceCharts);
+                    // Show a success message
+                    saveBulkPriceChart(priceCharts)
+                    statusMessageContainer.classList.remove('d-none');
+                    statusMessage.classList.remove('d-none');
+                } else {
+                    // Handle invalid form submission (Bootstrap's invalid feedback will be shown)
+                    console.log("Form has validation errors. Not submitting.");
+                }
+            }
+
+
+            async function fetchPriceChartList() {
+                const res = await fetch("/api/pricehart/get");
+                priceChartData = await res.json();
+                renderTable(priceChartData)
+                console.log('priceChart list ' + JSON.stringify(priceChartData))
+            }
+
+            async function saveBulkPriceChart(priceChartList) {
+                if (priceChartList) {
+                    try {
+                        const res = await fetch("/api/pricechart/save",
+                            {
+                                method: "POST",
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(priceChartList)
+                            }
+                        )
+
+                        console.log('res------------> ' + JSON.stringify(res));
+                    } catch (error) {
+                        showToast("Error on save record ", JSON.stringify(error), 'error')
+                    }
+                }
+            }
+
+
+            function showToast(title, message, type = "primary") {
+                // Get toast elements
+                const toastEl = document.getElementById("basicToast");
+                const toastTitle = document.getElementById("myToastTitle");
+                const toastMessage = document.getElementById("myToastMessage");
+                const header = toastEl.querySelector(".toast-header");
+
+                // Set values
+                toastTitle.textContent = title;
+                toastMessage.textContent = message;
+
+                // Update color (Bootstrap contextual classes)
+                header.className = `toast-header bg-${type} text-light`;
+
+                // Show toast
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show();
+            }
+
+            // Initialize on page load
+            fetchPriceChartList()
+            document.getElementById('searchInput').addEventListener('input', handleSearchInput);
+            document.getElementById('editForm').addEventListener('submit', handleEditFormSubmit);
+            myModal = new bootstrap.Modal(document.getElementById('editModal'));
+            document.getElementById('priceChartForm').addEventListener('submit', handleFormSubmit);
+        })
+    </script>
+</section>

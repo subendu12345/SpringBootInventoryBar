@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-    th:replace="base::layout(~{::section})">
+    th:replace="base::layout('Counter-in Details', ~{::section})">
 
 <head>
     <meta charset='utf-8'>
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title>Sale Detail</title>
+    <title>Counter-in Details</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
 
 </head>
@@ -31,10 +31,10 @@
                 </div>
             </div>
             <div class="card-header">
-                <h3 class="mb-0">Sales Detail</h3>
+                <h3 class="mb-0">Counter-in Details</h3>
             </div>
             <div class="card-body">
-                <p class="text-muted">View sales data filtered by month or date.</p>
+                <p class="text-muted">View counter-in data filtered by month or date.</p>
 
                 <!-- Filter Section -->
                 <div class="row my-4">

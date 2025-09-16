@@ -4,8 +4,10 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.prod.GreenValley.DTO.PriceBookRecordDTO;
+import com.prod.GreenValley.DTO.PriceChartDTO;
 import com.prod.GreenValley.Entities.PriceBook;
 
 public interface PriceBookRepo extends JpaRepository<PriceBook, Long> {
@@ -36,7 +38,11 @@ public interface PriceBookRepo extends JpaRepository<PriceBook, Long> {
     @Query(value = product_Find_query, nativeQuery = true)
     PriceBookRecordDTO getPriceBookByBarcode(String barcode);
 
-    @Query(value = "SELECT DISTINCT pb FROM PriceBook pb  WHERE product_id = : productId;", nativeQuery = true)
-    List<PriceBook> findPriceBookByProductId(Long productId);
+
+//
+   @Query(value="SELECT p.id, p.brand, p.volume_ml, pb.product_price from price_book as pb inner join product as p on p.id = pb.product_id WHERE lower(p.name) LIKE lower(concat('%', :name, '%'));", nativeQuery = true)
+    List<Object[]> findPriceBookByProductName(@Param("name") String name);
+
+
 
 }

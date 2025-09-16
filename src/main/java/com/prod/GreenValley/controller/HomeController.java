@@ -108,6 +108,16 @@ public class HomeController {
         return "backup/backupManager.html";
     }
 
+    @GetMapping("/price-Chart")
+    public String getPriceChartManager(){
+        return "priceChart/priceChartManager.html";
+    }
+
+    @GetMapping("/bar-counter")
+    public String getBarManagmentForm(){
+        return "/bar/barManagement.html";
+    }
+
 
 
 }

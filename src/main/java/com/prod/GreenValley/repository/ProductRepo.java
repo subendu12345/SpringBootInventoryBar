@@ -12,4 +12,10 @@ public interface ProductRepo extends JpaRepository<Product, Long>{
 
     @Query("SELECT p FROM Product p WHERE lower(p.name) LIKE lower(concat('%', :name, '%'))")
     List<Product> findByNameContainingIgnoreCase(@Param("name") String name);
+
+
+    @Query("SELECT DISTINCT p.brand FROM Product p")
+    List<String> findAllDistinctProductNames();
+
+
 }
