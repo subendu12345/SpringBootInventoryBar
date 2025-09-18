@@ -19,9 +19,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.prod.GreenValley.DTO.CounterStockInDetail;
 import com.prod.GreenValley.DTO.PriceBookDTO;
 import com.prod.GreenValley.DTO.SaleInfoDTO;
 import com.prod.GreenValley.DTO.SaleItemDTO;
+import com.prod.GreenValley.DTO.SaleReportDTO;
 import com.prod.GreenValley.Entities.Sale;
 import com.prod.GreenValley.Entities.SaleItem;
 import com.prod.GreenValley.service.PricaeBookService;
@@ -45,24 +47,14 @@ public class SaleRestApiController {
         @RequestParam("endDate") LocalDate endDate) {
         System.out.println("dateString ============================================== " + endDate);
         List<Sale> saleList = saleService.getSaleDataByDate(date, endDate);
-        List<SaleInfoDTO> saleDto = new ArrayList<>();
-        for (Sale sl : saleList) {
-            List<SaleItemDTO> saleItemDTOList = new ArrayList<>();
-            for (SaleItem saleItem : sl.getSaleItems()) {
-                SaleItemDTO dto = new SaleItemDTO();
-                dto.setSaleItemId(saleItem.getId());
-                dto.setQuantitySold(saleItem.getQuantitySold());
-                dto.setUnitPriceAtSale(saleItem.getUnitPriceAtSale());
-                dto.setProductInfo(saleItem.getProduct().getName());
-                saleItemDTOList.add(dto);
-            }
-            SaleInfoDTO saleInfoDTO = new SaleInfoDTO(sl.getId(), sl.getSaleDate(), sl.getTotalAmount(),
-                    saleItemDTOList);
-            saleDto.add(saleInfoDTO);
-        }
-        System.out.println("saleDto   " + saleDto);
-        return saleDto;
+        return prepareSaleDetail(saleList);
 
+    }
+
+    @GetMapping("/details/end-date")
+    public List<SaleInfoDTO> getCounterInDeatilByEndDate(@RequestParam("endDate") LocalDate endDate){
+        List<Sale> saleList = saleService.getSaleDataByDate(null, endDate);
+        return prepareSaleDetail(saleList);
     }
 
     // Only ADMIN can delete.
@@ -109,6 +101,33 @@ public class SaleRestApiController {
         System.out.println("barcode--------------------------->  "+ barcode);
         return bookService.getProductInfoByBarcode(barcode);
 
+    }
+
+    @GetMapping("/counter/toatlvoulmn")
+    public List<CounterStockInDetail> getCounterVolumn(){
+        return saleService.getTotalCounterInVolumn();
+    }
+
+
+    private List<SaleInfoDTO> prepareSaleDetail(List<Sale> saleList){
+        List<SaleInfoDTO> saleDto = new ArrayList<>();
+        for (Sale sl : saleList) {
+            List<SaleItemDTO> saleItemDTOList = new ArrayList<>();
+            for (SaleItem saleItem : sl.getSaleItems()) {
+                SaleItemDTO dto = new SaleItemDTO();
+                dto.setSaleItemId(saleItem.getId());
+                dto.setQuantitySold(saleItem.getQuantitySold());
+                dto.setUnitPriceAtSale(saleItem.getUnitPriceAtSale());
+                dto.setProductInfo(saleItem.getProduct().getName());
+                dto.setProductName(saleItem.getProduct().getName());
+                dto.setVolumnML(saleItem.getProduct().getVolumeMl());
+                saleItemDTOList.add(dto);
+            }
+            SaleInfoDTO saleInfoDTO = new SaleInfoDTO(sl.getId(), sl.getSaleDate(), sl.getTotalAmount(),
+                    saleItemDTOList);
+            saleDto.add(saleInfoDTO);
+        }
+        return saleDto;
     }
 
 }

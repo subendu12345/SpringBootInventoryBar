@@ -6,33 +6,6 @@
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
     <title>Price Chart</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
-
-    <style>
-        .table-card {
-            background-color: #f0f0f0;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            height: 150px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .table-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .table-number {
-            font-size: 3rem;
-            font-weight: 700;
-        }
-
-        .scrollable-list {
-            max-height: 250px;
-            overflow-y: auto;
-        }
-    </style>
 </head>
 <section>
     <div th:replace="/utill/MessageShow.html :: toast"></div>
@@ -65,13 +38,15 @@
                 <div th:replace="/bar/transctionHistory.html :: transctionHistory"></div>
             </div>
 
-             <div class="col-4">
-                
-               <div class="card" style="margin-top: 1rem;">
-                <div class="card-header">
+            <div class="col-4">
+
+                <div class="card" style="margin-top: 1rem;">
+                    <div class="card-header">
                         Counter Stock
+                        <div th:replace="/stock/counterStock.html :: counterStock"></div>
+                       
                     </div>
-               </div>
+                </div>
             </div>
         </div>
     </div>
@@ -186,7 +161,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-
+            
 
             const tables = [
                 { id: 1, number: 1, color: '#18cbc3' },  // teal
@@ -198,14 +173,47 @@
                 { id: 7, number: 7, color: '#f3722c' },  // orange
                 { id: 8, number: 8, color: '#7209b7' },  // violet
                 { id: 9, number: 9, color: '#3a86ff' },  // bright blue
-                { id: 10, number: 10, color: '#ff006e' } // pink
+                { id: 10, number: 10, color: '#ff006e42' } // pink
             ];
             // State management for draft orders
+            const DRAFT_ORDERS_KEY = 'draftOrders';
+            const TRANSACTION_HISTORY_KEY = 'transactionHistory';
             let draftOrders = {};
             let currentTableId = null;
             let tableModal;
             let priceChartData = []
             let tempPriceChartData = [];
+            let transactionHistory = [];
+
+
+            function loadDataFromLocalStorage() {
+                try {
+                    const savedOrders = localStorage.getItem(DRAFT_ORDERS_KEY);
+                    const savedHistory = localStorage.getItem(TRANSACTION_HISTORY_KEY);
+                    draftOrders = savedOrders ? JSON.parse(savedOrders) : {};
+                    transactionHistory = savedHistory ? JSON.parse(savedHistory) : [];
+                } catch (error) {
+                    console.error("Failed to load data from local storage:", error);
+                    draftOrders = {};
+                    transactionHistory = [];
+                }
+            }
+
+            function saveDraftOrdersToLocalStorage() {
+                try {
+                    localStorage.setItem(DRAFT_ORDERS_KEY, JSON.stringify(draftOrders));
+                } catch (error) {
+                    console.error("Failed to save draft orders to local storage:", error);
+                }
+            }
+
+            function saveTransactionHistoryToLocalStorage() {
+                try {
+                    localStorage.setItem(TRANSACTION_HISTORY_KEY, JSON.stringify(transactionHistory));
+                } catch (error) {
+                    console.error("Failed to save transaction history to local storage:", error);
+                }
+            }
 
 
             function generateRandomId(length = 8) {
@@ -233,9 +241,13 @@
                 tables.forEach(table => {
                     const col = document.createElement('div');
                     col.classList.add('col-12', 'col-md-12', 'col-lg-12');
+                    const hasActiveOrder = draftOrders[table.id] && draftOrders[table.id].length > 0;
+                    const activeClass = hasActiveOrder ? 'active' : '';
+                    console.log('activeClass  ' + activeClass)
                     col.innerHTML = `
-                    <div class="card table-card rounded-4 shadow-sm" style="margin: 3%; background-color:${table.color}; cursor: pointer;" data-table-id="${table.id}">
-                        <h3 class="table-number">Table-${table.number}</h3>
+                    <div class="card table-card rounded-4 shadow-sm ${activeClass}" style="margin: 3%; background-color:${table.color}; cursor: pointer;" data-table-id="${table.id}">
+                        <span class="blinking-dot"></span>
+                        <h4 class="table-number">Table-${table.number}</h4>
                     </div>
                 `;
                     col.querySelector('.table-card').addEventListener('click', () => openTableModal(table.id));
@@ -261,7 +273,7 @@
                     const row = document.createElement('tr');
                     row.innerHTML = `
                     <td class="align-middle">${item.productName}</td>
-                    <td class="align-middle">${item.size==0 ? item.extraSize : item.size +"ml"}</td>
+                    <td class="align-middle">${item.size == 0 ? item.extraSize : item.size + "ml"}</td>
                     <td class="align-middle">${item.price.toFixed(2)}</td>
                     <td class="align-middle">${item.quantity}</td>
                     <td class="align-middle">${subtotal.toFixed(2)}</td>
@@ -333,8 +345,11 @@
                 const indexToRemove = parseInt(event.target.dataset.index);
                 if (draftOrders[currentTableId]) {
                     draftOrders[currentTableId].splice(indexToRemove, 1);
+                    saveDraftOrdersToLocalStorage();
                     renderOrderItems(); // Re-render the table to reflect the change
+                    renderTableGrid();
                 }
+
             }
 
 
@@ -345,7 +360,7 @@
                 const quantity = parseInt(document.getElementById('extraItemQty').value);
 
                 if (!name || !extraSize || isNaN(price) || isNaN(quantity) || quantity <= 0) {
-                    showToast("Warning!",'Please fill all fields.', "warning")
+                    showToast("Warning!", 'Please fill all fields.', "warning")
                     return;
                 }
 
@@ -353,7 +368,7 @@
                     id: 'extra-' + generateRandomId(),
                     productName: name,
                     extraSize: extraSize,
-                    size:0,
+                    size: 0,
                     price: price,
                     quantity: quantity,
                     isExtraItem: true
@@ -362,12 +377,16 @@
                 if (draftOrders[currentTableId]) {
                     draftOrders[currentTableId].push(newItem);
                     renderOrderItems();
+                    saveDraftOrdersToLocalStorage();
+                    renderTableGrid();
+
                     // Clear the input fields for the next entry
                     document.getElementById('extraItemName').value = '';
                     document.getElementById('extraItemSize').value = '';
                     document.getElementById('extraItemPrice').value = '';
                     document.getElementById('extraItemQty').value = '1';
                 }
+                renderTableGrid();
             }
 
             function handleAddItem(event) {
@@ -393,6 +412,8 @@
                     }
 
                     renderOrderItems(); // Re-render the order table
+                    saveDraftOrdersToLocalStorage();
+                    renderTableGrid();
                 }
             }
 
@@ -409,7 +430,7 @@
             }
 
             function handleTransctionSubmit(event) {
-                event.preventDefault();
+                //event.preventDefault();
                 const form = event.target;
                 const tableId = parseInt(document.getElementById('currentTableId').value);
                 const totalAmount = parseFloat(document.getElementById('totalAmount').value);
@@ -425,9 +446,18 @@
 
                 console.log("Submitting Transaction:", transactionData);
 
-                //delete draftOrders[tableId];
+                delete draftOrders[tableId];
+
                 saveTransction(transactionData);
+                saveDraftOrdersToLocalStorage();
+                renderTableGrid();
                 tableModal.hide();
+            }
+
+
+            function doFireCustomEvent() {
+                const transactionEvent = new CustomEvent('transaction-submitted');
+                document.dispatchEvent(transactionEvent);
             }
 
             async function saveTransction(transctionObj) {
@@ -441,7 +471,8 @@
                     )
                     const resPonse = await res.json();
                     if (resPonse && resPonse.message == 'success') {
-                        showToast('Record Saved!', 'Record Successfully Saved.', 'success');
+                        doFireCustomEvent()
+                        showToast('Record Saved!', 'Record Successfully Saved.', "success");
                     } else {
                         showToast('Error on save record!', resPonse.message, 'error');
                     }
@@ -512,15 +543,69 @@
 
             // --- Initialization on page load ---
             fetchPriceChartList()
-            renderTableGrid();
+
             document.getElementById('productSearchInput').addEventListener('input', debouncedSearch);
             document.getElementById('transctionForm').addEventListener('submit', handleTransctionSubmit);
             document.getElementById('toggleAddItem').addEventListener('click', toggleAddItemSection);
             document.getElementById('discount').addEventListener('input', updateTotalAndDiscount);
             document.getElementById('addExtraItemBtn').addEventListener('click', handleAddExtraItem);
             tableModal = new bootstrap.Modal(document.getElementById('tableModal'));
+            loadDataFromLocalStorage();
+            renderTableGrid();
 
         })
     </script>
+
+
+    <style>
+        .table-card {
+            background-color: #f0f0f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .blinking-dot {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            background-color: #ff0000;
+            border-radius: 50%;
+            display: none;
+            /* Hidden by default */
+            animation: blinker 2s linear infinite;
+        }
+
+        .table-card.active .blinking-dot {
+            display: block;
+        }
+
+        @keyframes blinker {
+            50% {
+                opacity: 0;
+            }
+        }
+
+
+        .table-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-number {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .scrollable-list {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+    </style>
 
 </section>

@@ -211,6 +211,13 @@
                 }
             }
 
+            document.addEventListener('transaction-submitted', () => {
+                console.log("Custom 'transaction-submitted' event received. Refreshing table...");
+                fetchTransactions();
+
+            })
+           
+
             // Initial fetch of transactions when the page loads
             fetchTransactions();
         });

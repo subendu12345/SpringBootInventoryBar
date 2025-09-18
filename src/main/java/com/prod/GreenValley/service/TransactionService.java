@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.prod.GreenValley.DTO.CounterStockInDetail;
 import com.prod.GreenValley.Entities.Transction;
 import com.prod.GreenValley.Entities.TransctionItem;
 import com.prod.GreenValley.repository.TransactionRepo;
@@ -66,7 +67,11 @@ public class TransactionService {
      * @return A list of all Transction entities.
      */
     public List<Transction> getAllTransactions() {
-        return transctionRepository.findAll();
+        return transctionRepository.findAllByOrderByIdDesc();
+    }
+
+    public List<CounterStockInDetail> getTotalTranctionVolume(){
+        return transctionRepository.getTotalTransctionVolume();
     }
     
 }

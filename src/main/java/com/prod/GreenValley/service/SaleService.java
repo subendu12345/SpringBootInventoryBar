@@ -9,6 +9,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.prod.GreenValley.DTO.CounterStockInDetail;
 import com.prod.GreenValley.DTO.ProductSearchDTO;
 import com.prod.GreenValley.DTO.SaleReportDTO;
 import com.prod.GreenValley.Entities.PriceBook;
@@ -48,11 +49,11 @@ public class SaleService {
         return sale;
     }
 
-    public List<Sale> getSaleDataByDate(LocalDate saleDate, LocalDate endDate){
-        if(endDate==null){
-             return saleRepo.findSalesByDateRange(saleDate);
+    public List<Sale> getSaleDataByDate(LocalDate startDate, LocalDate endDate){
+        if(startDate==null){
+             return saleRepo.findSalesByDateRange(endDate);
         }
-        return saleRepo.findSalesByDateRange(saleDate, endDate);
+        return saleRepo.findSalesByDateRange(startDate, endDate);
     }
 
     public List<SaleReportDTO> getSaleReport(LocalDate startDate, LocalDate endDate, Long catId){
@@ -117,6 +118,10 @@ public class SaleService {
         }
         return "success";
 
+    }
+
+    public List<CounterStockInDetail> getTotalCounterInVolumn(){
+        return saleRepo.getTotalCounterInVolumn();
     }
 
     

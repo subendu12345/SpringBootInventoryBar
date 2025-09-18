@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.prod.GreenValley.DTO.CounterStockInDetail;
 import com.prod.GreenValley.Entities.Transction;
 import com.prod.GreenValley.Entities.TransctionItem;
 import com.prod.GreenValley.service.TransactionService;
@@ -27,11 +28,12 @@ public class TransctionController {
     private TransactionService transactionService;
     
     @PostMapping("/save")
-    public ResponseEntity<Map<String, String>>  createTransaction(@RequestBody TransactionRequest request) {
-        Map<String, String> jsonResponse = new HashMap<>();
+    public ResponseEntity<Map<String, Object>>  createTransaction(@RequestBody TransactionRequest request) {
+        Map<String, Object> jsonResponse = new HashMap<>();
         try {
-            transactionService.saveTransaction(request);
+            TransactionRequest transactionRequest = getTransctionObject(transactionService.saveTransaction(request));
             jsonResponse.put("message", "sucess");
+            jsonResponse.put("trans", transactionRequest);
         } catch (Exception e) {
             jsonResponse.put("message", e.getMessage());
         }
@@ -81,6 +83,11 @@ public class TransctionController {
         trns.setTotalAmount(transction.getTotalAmount());
         trns.setItems(itemRequests);
         return trns;
+    }
+
+    @GetMapping("/get/transction-volume")
+    public List<CounterStockInDetail> getTransctionVolume(){
+        return transactionService.getTotalTranctionVolume();
     }
     
 }

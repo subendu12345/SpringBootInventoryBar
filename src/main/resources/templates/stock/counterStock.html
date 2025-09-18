@@ -1,4 +1,150 @@
 <div th:fragment="counterStock">
 
+    <div class="container">
+        <div class="d-flex justify-content-between mb-3">
+            <span class="badge bg-primary fs-6" id="totalCounterInVol"></span>
+            <span class="badge bg-success fs-6" id="totalCounterSaleVol"></span>
+        </div>
+        <h2 class="text-center mb-4" id="currentVolPresent"></h2>
+        <canvas id="volumeChart"></canvas>
 
+
+    </div>
+
+    <div id="stock_loading-spinner" class="justify-content-center mt-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let loadingSpinner = document.getElementById('stock_loading-spinner');
+            const chartCanvas = document.getElementById('volumeChart');
+            let myChart = null;
+            let curentVolumePresent = 0;
+
+
+            async function renderChart(chartData) {
+
+                if (chartData.length === 0) {
+                    chartCanvas.style.display = 'none';
+                    return;
+                }
+
+                // Extract labels (product names) and data (total volumes) from the fetched data
+                const labels = chartData.map(item => item.productName);
+                const volumes = chartData.map(item => item.totalCounterVolume);
+
+                // Chart.js configuration
+                const data = {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Volume Left (mL)',
+                        data: volumes,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                };
+
+                const config = {
+                    type: 'bar',
+                    data: data,
+                    options: {
+                        indexAxis: 'y', // This is the key change to make the bars horizontal
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Product Name'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Total Volume (mL)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                };
+
+                // Destroy existing chart instance if it exists before creating a new one
+                if (myChart) {
+                    myChart.destroy();
+                }
+
+                myChart = new Chart(chartCanvas, config);
+            }
+
+            async function featchCounterStock() {
+
+                try {
+                    let res = await fetch("/sale/counter/toatlvoulmn");
+                    let transVolRes = await fetch("/api/transction/get/transction-volume")
+                    let counterInVol = await res.json();
+                    let transVolJsonData = await transVolRes.json();
+
+                    let dataX = JSON.parse(JSON.stringify(counterInVol));
+                    let totalCounterInVol = getTotalCounterInStock(dataX);
+                    let totalCounterSaleVol = getBarSaleVolume(JSON.parse(JSON.stringify(transVolJsonData)))
+
+                    console.log('totalCounterInVol ' + totalCounterInVol + ' totalCounterSaleVol ' + totalCounterSaleVol)
+                    calculateVolume(counterInVol, transVolJsonData)
+                    document.getElementById('currentVolPresent').textContent = 'Current Stock ' + (totalCounterInVol - totalCounterSaleVol) +'(ML)';
+
+                    document.getElementById('totalCounterInVol').textContent = 'Total Counter in- '+totalCounterInVol+'(ML)';
+                    document.getElementById('totalCounterSaleVol').textContent = 'Total sold- '+totalCounterSaleVol+'(ML)';
+                    renderChart(counterInVol)
+                    console.log("fatya  ", JSON.stringify(counterInVol))
+
+                    loadingSpinner.style.setProperty('display', 'none', 'important');
+                } catch (error) {
+                    loadingSpinner.style.setProperty('display', 'none', 'important');
+                    console.log('error from volumn fetch ' + JSON.stringify(error))
+                }
+
+
+            }
+
+            function calculateVolume(counterInVolObj, counterSaleVol) {
+                let newVolObj = [];
+                for (const ctrSale of counterSaleVol) {
+                    let counterInByBrand = counterInVolObj.find(ctrIn => ctrIn.productName === ctrSale.productName);
+                    counterInByBrand['totalCounterVolume'] = counterInByBrand.totalCounterVolume - ctrSale.totalCounterVolume;
+                    curentVolumePresent += counterInByBrand['totalCounterVolume'];
+                }
+
+
+            }
+
+            function getTotalCounterInStock(counterInVolObj) {
+                let counterInVolume = 0;
+                for (const cotrIn of counterInVolObj) {
+                    counterInVolume += cotrIn['totalCounterVolume'];
+                }
+                return counterInVolume;
+            }
+
+            function getBarSaleVolume(barSaleVolObj) {
+                let barSaleVol = 0;
+
+                for (const barSale of barSaleVolObj) {
+                    barSaleVol += barSale.totalCounterVolume
+                }
+
+                return barSaleVol;
+            }
+
+            featchCounterStock()
+        })
+    </script>
 </div>
