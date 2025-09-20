@@ -132,16 +132,22 @@
             let productUniqeNames = [];
             let priceChartData = [];
             // Function to render the table with provided data
+
+
+
             function renderTable(data) {
+                const sortedData = data.sort((a, b) =>
+                    a.productName.localeCompare(b.productName, undefined, { sensitivity: 'base' })
+                );
                 const tableBody = document.getElementById('priceChartTableBody');
                 tableBody.innerHTML = '';
 
-                if (data.length === 0) {
+                if (sortedData.length === 0) {
                     tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No data available.</td></tr>`;
                     return;
                 }
 
-                data.forEach(item => {
+                sortedData.forEach(item => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                     <td class="align-middle">${item.id}</td>
@@ -243,9 +249,19 @@
             }
 
             // Handle Delete button click
-            function handleDeleteClick(event) {
+            async function handleDeleteClick(event) {
                 const id = parseInt(event.target.dataset.id);
                 // In a real application, you would send a DELETE request to your backend here
+
+                try {
+                    let deleteRes = await fetch(`/api/pricechart/delete/${id}`,{method:"DELETE"})
+                    console.log('deleteRes '+ deleteRes)
+                    fetchPriceChartList();
+                    showToast("Success!","Price Deleted.", "success")
+                } catch (error) {
+                    showToast("Error!", JSON.stringify(error), "error")
+                }
+                
                 console.log(`Deleting record with ID: ${id}`);
             }
 
@@ -276,7 +292,11 @@
             // Function to create and render the form fields dynamically
             function renderFormFields() {
                 console.log('productUniqeNames ' + JSON.stringify(productUniqeNames))
-                const sortedData = productUniqeNames.sort((a, b) =>
+                const uniqueData = productUniqeNames.filter(
+                    (item, index, self) =>
+                        index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
+                    );
+                const sortedData = uniqueData.sort((a, b) =>
                     a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
                 );
                 productUniqeNames = sortedData
@@ -349,7 +369,7 @@
                 productUniqeNames.forEach(product => {
 
                     //handle Beer price
-                    if (product.includes("(Beer) ")) {
+                    if (product.name.includes("(Beer) ")) {
                         const priceForBeer = document.getElementById(`price-${product.id}-${product.name}`)
 
                         if (!priceForBeer.value.trim() || isNaN(priceForBeer.value.trim())) {
@@ -358,7 +378,7 @@
                             productValid = false;
                         } else {
                             let productName = product.name.split("(Beer)")[1].split(" - ")[0]
-                            let productSize = parseInt(product.name.p.split("- ")[1])
+                            let productSize = parseInt(product.name.split("- ")[1])
                             priceCharts.push({
                                 productName: productName,
                                 size: productSize,

@@ -71,5 +71,9 @@ public class PriceChartService {
         }
         return priceChartDTOs;
     }
+
+    public void deletePriceChartById(Long id){
+        priceChartRepo.deleteById(id);;
+    }
     
 }

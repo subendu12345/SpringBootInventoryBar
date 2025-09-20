@@ -3,6 +3,7 @@ package com.prod.GreenValley.restController;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,6 +51,16 @@ public class PriceChartRESTApi {
             return "success";
         } catch (Exception e) {
            return e.getMessage();
+        }
+    }
+
+    @DeleteMapping("/pricechart/delete/{id}")
+    public String deletePriceChartById(@PathVariable Long id){
+        try {
+            priceChartService.deletePriceChartById(id);
+            return "success";
+        } catch (Exception e) {
+            return e.getMessage();
         }
     }
     
