@@ -3,6 +3,7 @@ package com.prod.GreenValley.restController;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -83,7 +84,7 @@ public class ProductRESTApi {
     }
 
     @GetMapping("/get/getuniquenames")
-    public List<String> getProductUniqueNames(){
+    public Set<String> getProductUniqueNames(){
         return productService.findAllDistinctProductNames();
     }
 }

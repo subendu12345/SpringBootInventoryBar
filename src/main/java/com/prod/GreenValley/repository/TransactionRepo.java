@@ -1,5 +1,6 @@
 package com.prod.GreenValley.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,8 +14,17 @@ public interface TransactionRepo extends JpaRepository<Transction, Long>{
     public List<Transction> findAllByOrderByIdDesc();
 
 
+    @Query("SELECT DISTINCT t FROM Transction t JOIN FETCH t.items ti WHERE t.transctionDate >= :starDate AND t.transctionDate <= :endDate ORDER BY ti.id DESC")
+    public List<Transction> filterTransctionByStartEndDate(LocalDate starDate, LocalDate endDate);
+
+
+
+    @Query("SELECT DISTINCT t FROM Transction t JOIN FETCH t.items ti WHERE t.transctionDate <= :endDate ORDER BY ti.id DESC")
+    public List<Transction> filterTransctionByEndDate(LocalDate endDate);
+
+
     String GET_TOTAL_VOL="""
-            SELECT product_name as productName, sum(size) as totalCounterVolume  from transction_item where is_extra_item = false group by product_name;
+            SELECT product_name as productName, sum(size * quantity) as totalCounterVolume  from transction_item where is_extra_item = false group by product_name;
         """;
 
     

@@ -1,6 +1,7 @@
 package com.prod.GreenValley.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -72,6 +73,15 @@ public class TransactionService {
 
     public List<CounterStockInDetail> getTotalTranctionVolume(){
         return transctionRepository.getTotalTransctionVolume();
+    }
+
+
+    public List<Transction> filterTransctionByStartDateEndDate(LocalDate startDate, LocalDate endDate){
+        if(startDate == null){
+            return transctionRepository.filterTransctionByEndDate(endDate);
+        }else{
+            return transctionRepository.filterTransctionByStartEndDate(startDate, endDate);
+        }
     }
     
 }

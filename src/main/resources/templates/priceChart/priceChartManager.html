@@ -6,36 +6,14 @@
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
     <title>Price Chart</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <style>
-        section {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8f9fa;
-        }
 
-        .main-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* New class for the scrollable form section */
-        .scrollable-form {
-            max-height: 400px;
-            /* Set a fixed height */
-            overflow-y: auto;
-            /* Enable vertical scrolling */
-            padding-right: 15px;
-            /* Add some padding to prevent the scrollbar from touching the content */
-        }
-    </style>
 </head>
 <section>
     <div class="">
         <div th:replace="/utill/MessageShow.html :: toast"></div>
         <div class="card shadow-lg">
             <div class="card-header text-center bg-primary text-white">
-                <h3 class="mb-0"><i class="fas fa-chart-line"></i> Price Chart Manager</h3>
+                <h3 class="mb-0"><i class="fas fa-chart-line"></i> Peg Rete Chart</h3>
 
             </div>
 
@@ -93,7 +71,7 @@
                             </div>
                             <div class="mb-3">
                                 <label for="editSize" class="form-label">Size</label>
-                                <input type="number" class="form-control" id="editSize" disabled>
+                                <input type="number" class="form-control" id="editSize" required>
                             </div>
                             <div class="mb-3">
                                 <label for="editPrice" class="form-label">Price</label>
@@ -169,7 +147,7 @@
                     <td class="align-middle">${item.id}</td>
                     <td class="align-middle">${item.productName}</td>
                     <td class="align-middle">${item.size}ml</td>
-                    <td class="align-middle">$${item.price.toFixed(2)}</td>
+                    <td class="align-middle">₹${item.price.toFixed(2)}</td>
                     <td class="align-middle">
                         <button class="btn btn-sm btn-outline-primary me-2 edit-btn" data-id="${item.id}">Edit</button>
                         <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${item.id}">Delete</button>
@@ -205,10 +183,11 @@
 
 
             // Handle form submission for the edit modal
-            function handleEditFormSubmit(event) {
+            async function handleEditFormSubmit(event) {
                 event.preventDefault();
                 const form = event.target;
                 const priceInput = document.getElementById('editPrice');
+                const sizeValue = document.getElementById("editSize");
 
                 // Basic validation
                 if (!priceInput.value.trim() || isNaN(priceInput.value.trim())) {
@@ -218,11 +197,31 @@
                     priceInput.classList.remove('is-invalid');
                 }
 
+                if (!sizeValue.value.trim() || isNaN(sizeValue.value.trim())) {
+                    sizeValue.classList.add('is-invalid');
+                } else {
+                    sizeValue.classList.remove('is-invalid');
+                }
+
                 const id = parseInt(document.getElementById('editId').value);
                 const newPrice = parseFloat(priceInput.value.trim());
+                const newSize = parseInt(sizeValue.value.trim())
+                const PriceChartDTO = {
+                    id: id,
+                    size: newSize,
+                    price: newPrice
+                }
+
+                let updateRes = await fetch("/api/pricechart/update/",
+                    {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(PriceChartDTO)
+                    }
+                )
 
                 // In a real app, you'd send an UPDATE request to your backend
-                console.log(`Updating record ID ${id} with new price: ${newPrice}`);
+                console.log('updateRes ' + JSON.stringify(updateRes))
 
                 // To reflect changes in the UI, you would then re-fetch the data or update the local array
                 const itemToUpdate = priceChartData.find(item => item.id === id);
@@ -277,6 +276,10 @@
             // Function to create and render the form fields dynamically
             function renderFormFields() {
                 console.log('productUniqeNames ' + JSON.stringify(productUniqeNames))
+                const sortedData = productUniqeNames.sort((a, b) =>
+                    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+                );
+                productUniqeNames = sortedData
                 const container = document.getElementById('productFormsContainer');
                 let formHtml = '';
                 let productNameIndex = 111;
@@ -286,9 +289,21 @@
                         <div class="card-header fw-bold">${product.name}</div>
                         <div class="card-body">
                             <input type="hidden" name="productId" value="${product.id}">
+                           
+                        
                             <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="price-${product.id}-30ml" class="form-label">Price (30ml)</label>
+                                 ${product.name.includes("(Beer) ") ? `
+                                 <div class="col-md-6 mb-3">
+                                    <label for="price-${product.name}" class="form-label">${product.name}ml</label>
+                                    <input type="hidden" name="size" value="${product.name}">
+                                    <input type="number" step="0.01" class="form-control" id="price-${product.id}-${product.name}" name="${product.name}" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a valid price for ${product.name}.
+                                    </div>
+                                </div>
+                                 ` : `
+                                 <div class="col-md-6 mb-3">
+                                    <label for="price-${product.name}-30ml" class="form-label">Price (30ml)</label>
                                     <input type="hidden" name="size" value="30">
                                     <input type="number" step="0.01" class="form-control" id="price-${product.id}-30ml" name="price-30ml" required>
                                     <div class="invalid-feedback">
@@ -303,6 +318,8 @@
                                         Please provide a valid price for 60ml.
                                     </div>
                                 </div>
+                                 `}
+                                
                             </div>
                         </div>
                     </div>
@@ -330,38 +347,59 @@
 
                 // Iterate over each product card to validate inputs
                 productUniqeNames.forEach(product => {
-                    const price30mlInput = document.getElementById(`price-${product.id}-30ml`);
-                    const price60mlInput = document.getElementById(`price-${product.id}-60ml`);
-                    console.log('---------------------- ')
-                    let productValid = true;
 
-                    // Validate 30ml price
-                    if (!price30mlInput.value.trim() || isNaN(price30mlInput.value.trim())) {
-                        price30mlInput.classList.add('is-invalid');
-                        isValid = false;
-                        productValid = false;
+                    //handle Beer price
+                    if (product.includes("(Beer) ")) {
+                        const priceForBeer = document.getElementById(`price-${product.id}-${product.name}`)
+
+                        if (!priceForBeer.value.trim() || isNaN(priceForBeer.value.trim())) {
+                            priceForBeer.classList.add('is-invalid');
+                            isValid = false;
+                            productValid = false;
+                        } else {
+                            let productName = product.name.split("(Beer)")[1].split(" - ")[0]
+                            let productSize = parseInt(product.name.p.split("- ")[1])
+                            priceCharts.push({
+                                productName: productName,
+                                size: productSize,
+                                price: parseFloat(priceForBeer.value.trim())
+                            });
+                        }
+                    } else {//handle other product
+                        const price30mlInput = document.getElementById(`price-${product.id}-30ml`);
+                        const price60mlInput = document.getElementById(`price-${product.id}-60ml`);
+                        console.log('---------------------- ')
+                        let productValid = true;
+
+                        // Validate 30ml price
+                        if (!price30mlInput.value.trim() || isNaN(price30mlInput.value.trim())) {
+                            price30mlInput.classList.add('is-invalid');
+                            isValid = false;
+                            productValid = false;
+                        }
+
+                        // Validate 60ml price
+                        if (!price60mlInput.value.trim() || isNaN(price60mlInput.value.trim())) {
+                            price60mlInput.classList.add('is-invalid');
+                            isValid = false;
+                            productValid = false;
+                        }
+
+                        // If the product fields are valid, add them to the array
+                        if (productValid) {
+                            priceCharts.push({
+                                productName: product.name,
+                                size: 30,
+                                price: parseFloat(price30mlInput.value.trim())
+                            });
+                            priceCharts.push({
+                                productName: product.name,
+                                size: 60,
+                                price: parseFloat(price60mlInput.value.trim())
+                            });
+                        }
                     }
 
-                    // Validate 60ml price
-                    if (!price60mlInput.value.trim() || isNaN(price60mlInput.value.trim())) {
-                        price60mlInput.classList.add('is-invalid');
-                        isValid = false;
-                        productValid = false;
-                    }
-
-                    // If the product fields are valid, add them to the array
-                    if (productValid) {
-                        priceCharts.push({
-                            productName: product.name,
-                            size: 30,
-                            price: parseFloat(price30mlInput.value.trim())
-                        });
-                        priceCharts.push({
-                            productName: product.name,
-                            size: 60,
-                            price: parseFloat(price60mlInput.value.trim())
-                        });
-                    }
                 });
 
                 // If the form is valid, process the data
@@ -433,4 +471,16 @@
             document.getElementById('priceChartForm').addEventListener('submit', handleFormSubmit);
         })
     </script>
+
+    <style>
+        /* New class for the scrollable form section */
+        .scrollable-form {
+            max-height: 400px;
+            /* Set a fixed height */
+            overflow-y: auto;
+            /* Enable vertical scrolling */
+            padding-right: 15px;
+            /* Add some padding to prevent the scrollbar from touching the content */
+        }
+    </style>
 </section>

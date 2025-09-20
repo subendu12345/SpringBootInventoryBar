@@ -31,6 +31,13 @@ public class PriceChartService {
         priceChartRepo.saveAll(pcList);
     }
 
+    public void updatePriceChart(PriceChartDTO priceChartDTO){
+        PriceChart priceChart = priceChartRepo.findById(priceChartDTO.getId()).orElse(null);
+        priceChart.setPrice(priceChartDTO.getPrice());
+        priceChart.setSize(priceChartDTO.getSize());
+        priceChartRepo.save(priceChart);
+    }
+
 
     public List<PriceChartDTO> findAllPriceChart(){
         List<PriceChartDTO> priceChartDTOs = new ArrayList<>();

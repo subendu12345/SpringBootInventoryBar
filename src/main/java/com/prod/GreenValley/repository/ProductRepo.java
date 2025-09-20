@@ -14,7 +14,7 @@ public interface ProductRepo extends JpaRepository<Product, Long>{
     List<Product> findByNameContainingIgnoreCase(@Param("name") String name);
 
 
-    @Query("SELECT DISTINCT p.brand FROM Product p")
+    @Query("SELECT DISTINCT CONCATE(p.brand, p.volumeMl) FROM Product p")
     List<String> findAllDistinctProductNames();
 
 

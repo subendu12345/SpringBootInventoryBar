@@ -99,10 +99,10 @@
 
                     console.log('totalCounterInVol ' + totalCounterInVol + ' totalCounterSaleVol ' + totalCounterSaleVol)
                     calculateVolume(counterInVol, transVolJsonData)
-                    document.getElementById('currentVolPresent').textContent = 'Current Stock ' + (totalCounterInVol - totalCounterSaleVol) +'(ML)';
+                    document.getElementById('currentVolPresent').textContent = 'Current Stock ' + (totalCounterInVol - totalCounterSaleVol) + '(ML)';
 
-                    document.getElementById('totalCounterInVol').textContent = 'Total Counter in- '+totalCounterInVol+'(ML)';
-                    document.getElementById('totalCounterSaleVol').textContent = 'Total sold- '+totalCounterSaleVol+'(ML)';
+                    document.getElementById('totalCounterInVol').textContent = 'Total Counter in- ' + totalCounterInVol + '(ML)';
+                    document.getElementById('totalCounterSaleVol').textContent = 'Total sold- ' + totalCounterSaleVol + '(ML)';
                     renderChart(counterInVol)
                     console.log("fatya  ", JSON.stringify(counterInVol))
 
@@ -119,8 +119,11 @@
                 let newVolObj = [];
                 for (const ctrSale of counterSaleVol) {
                     let counterInByBrand = counterInVolObj.find(ctrIn => ctrIn.productName === ctrSale.productName);
-                    counterInByBrand['totalCounterVolume'] = counterInByBrand.totalCounterVolume - ctrSale.totalCounterVolume;
-                    curentVolumePresent += counterInByBrand['totalCounterVolume'];
+                    if (counterInByBrand) {
+                        counterInByBrand['totalCounterVolume'] = counterInByBrand.totalCounterVolume - ctrSale.totalCounterVolume;
+                        curentVolumePresent += counterInByBrand['totalCounterVolume'];
+                    }
+
                 }
 
 

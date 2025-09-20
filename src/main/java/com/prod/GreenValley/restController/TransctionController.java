@@ -1,5 +1,6 @@
 package com.prod.GreenValley.restController;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.prod.GreenValley.DTO.CounterStockInDetail;
@@ -88,6 +90,38 @@ public class TransctionController {
     @GetMapping("/get/transction-volume")
     public List<CounterStockInDetail> getTransctionVolume(){
         return transactionService.getTotalTranctionVolume();
+    }
+
+    @GetMapping("/get/detail/date")
+    public List<TransactionRequest> getDataByStartDateEndDate(
+        @RequestParam("startDate") LocalDate startDate,
+        @RequestParam("endDate") LocalDate endDate){
+            System.out.println("=================================================sDate "+startDate+" endDate "+ endDate);
+        List<TransactionRequest> transactionRequests = new ArrayList<>();
+
+        List<Transction> transactions = transactionService.filterTransctionByStartDateEndDate(startDate, endDate);
+        for (Transction transction : transactions) {
+            transactionRequests.add(getTransctionObject(transction));
+        }
+
+        return transactionRequests;
+
+    }
+
+
+    
+    @GetMapping("/get/detail/end-date")
+    public List<TransactionRequest> getDataByEndDate(
+        @RequestParam("endDate") LocalDate endDate){
+        List<TransactionRequest> transactionRequests = new ArrayList<>();
+
+        List<Transction> transactions = transactionService.filterTransctionByStartDateEndDate(null, endDate);
+        for (Transction transction : transactions) {
+            transactionRequests.add(getTransctionObject(transction));
+        }
+
+        return transactionRequests;
+
     }
     
 }

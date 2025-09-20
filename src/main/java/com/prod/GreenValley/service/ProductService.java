@@ -10,14 +10,14 @@ import com.prod.GreenValley.Entities.Product;
 import com.prod.GreenValley.Entities.PurchaseEntryItem;
 import com.prod.GreenValley.Entities.SaleItem;
 import com.prod.GreenValley.Entities.SubCategory;
-import com.prod.GreenValley.repository.PriceBookRepo;
 import com.prod.GreenValley.repository.ProductRepo;
 import com.prod.GreenValley.repository.PurchaseEntryItemRepo;
 import com.prod.GreenValley.repository.SalesItemRepo;
 import com.prod.GreenValley.repository.SubCategoryRepo;
 
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,8 +42,8 @@ public class ProductService {
         return productRepo.findAll();
     }
 
-    public List<String> findAllDistinctProductNames(){
-        return productRepo.findAllDistinctProductNames();
+    public Set<String> findAllDistinctProductNames(){
+        return findAllProductUniqueNames();
     }
 
     public Product findProductById(Long id) {
@@ -102,6 +102,23 @@ public class ProductService {
 
     public List<PriceBookDTO> getPriceBooksByProductId(Long productId) {
         return bookService.getPriceBooksByProductId(productId);
+    }
+
+
+    private Set<String> findAllProductUniqueNames(){
+        System.out.println("hello bos=========================================");
+        Set<String> produnameSet = new HashSet<>();
+        
+        for (Product product : productRepo.findAll()) {
+            if(product.getSubCategory() != null){
+                if(product.getSubCategory().getCategory().getName().contains("Beer")){
+                    produnameSet.add("(Beer) "+product.getBrand() + " - "+product.getVolumeMl());
+                }else{
+                  produnameSet.add(product.getBrand());
+                }
+            }
+        }
+        return produnameSet;
     }
 
 }
