@@ -5,9 +5,21 @@
             <span class="badge bg-primary fs-6" id="totalCounterInVol"></span>
             <span class="badge bg-success fs-6" id="totalCounterSaleVol"></span>
         </div>
-        <h2 class="text-center mb-4" id="currentVolPresent"></h2>
-        <canvas id="volumeChart"></canvas>
+        <h4 class="text-center mb-2" id="currentVolPresent"></h4>
+        <!-- <canvas id="volumeChart"></canvas> -->
+        <h4 class="mb-1">Product Volumes</h4>
 
+        <div class="table-container">
+            <table class="table table-bordered table-striped text-center align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Total Counter Volume</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
 
     </div>
 
@@ -25,64 +37,75 @@
             let curentVolumePresent = 0;
 
 
-            async function renderChart(chartData) {
+            // async function renderChart(chartData) {
 
-                if (chartData.length === 0) {
-                    chartCanvas.style.display = 'none';
-                    return;
-                }
+            //     if (chartData.length === 0) {
+            //         chartCanvas.style.display = 'none';
+            //         return;
+            //     }
 
-                // Extract labels (product names) and data (total volumes) from the fetched data
-                const labels = chartData.map(item => item.productName);
-                const volumes = chartData.map(item => item.totalCounterVolume);
+            //     // Extract labels (product names) and data (total volumes) from the fetched data
+            //     const labels = chartData.map(item => item.productName);
+            //     const volumes = chartData.map(item => item.totalCounterVolume);
 
-                // Chart.js configuration
-                const data = {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Volume Left (mL)',
-                        data: volumes,
-                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    }]
-                };
+            //     // Chart.js configuration
+            //     const data = {
+            //         labels: labels,
+            //         datasets: [{
+            //             label: 'Volume Left (mL)',
+            //             data: volumes,
+            //             backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            //             borderColor: 'rgba(54, 162, 235, 1)',
+            //             borderWidth: 1
+            //         }]
+            //     };
 
-                const config = {
-                    type: 'bar',
-                    data: data,
-                    options: {
-                        indexAxis: 'y', // This is the key change to make the bars horizontal
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Product Name'
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Total Volume (mL)'
-                                }
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        }
-                    }
-                };
+            //     const config = {
+            //         type: 'bar',
+            //         data: data,
+            //         options: {
+            //             indexAxis: 'y', // This is the key change to make the bars horizontal
+            //             responsive: true,
+            //             scales: {
+            //                 y: {
+            //                     beginAtZero: true,
+            //                     title: {
+            //                         display: true,
+            //                         text: 'Product Name'
+            //                     }
+            //                 },
+            //                 x: {
+            //                     title: {
+            //                         display: true,
+            //                         text: 'Total Volume (mL)'
+            //                     }
+            //                 }
+            //             },
+            //             plugins: {
+            //                 legend: {
+            //                     display: false
+            //                 }
+            //             }
+            //         }
+            //     };
 
-                // Destroy existing chart instance if it exists before creating a new one
-                if (myChart) {
-                    myChart.destroy();
-                }
+            //     // Destroy existing chart instance if it exists before creating a new one
+            //     if (myChart) {
+            //         myChart.destroy();
+            //     }
 
-                myChart = new Chart(chartCanvas, config);
+            //     myChart = new Chart(chartCanvas, config);
+            // }
+
+            function rendarTable(data) {
+                const tableBody = document.getElementById("tableBody");
+                data.forEach(item => {
+                    const row = `<tr>
+                    <td><lable>${item.productName}</lable></td>
+                    <td><strong>${item.totalCounterVolume}-ml</strong></td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                });
             }
 
             async function featchCounterStock() {
@@ -103,7 +126,7 @@
 
                     document.getElementById('totalCounterInVol').textContent = 'Total Counter in- ' + totalCounterInVol + '(ML)';
                     document.getElementById('totalCounterSaleVol').textContent = 'Total sold- ' + totalCounterSaleVol + '(ML)';
-                    renderChart(counterInVol)
+                    rendarTable(counterInVol)
                     console.log("fatya  ", JSON.stringify(counterInVol))
 
                     loadingSpinner.style.setProperty('display', 'none', 'important');
@@ -125,7 +148,7 @@
                     }
 
                 }
-
+                console.log('counterInVolObj-----------------------------> ' + JSON.stringify(counterInVolObj))
 
             }
 
@@ -150,4 +173,21 @@
             featchCounterStock()
         })
     </script>
+
+    <style>
+        .table-container {
+            max-height: 500px;
+            /* scrollable height */
+            overflow-y: auto;
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #212529;
+            /* same as table-dark */
+            color: white;
+        }
+    </style>
 </div>

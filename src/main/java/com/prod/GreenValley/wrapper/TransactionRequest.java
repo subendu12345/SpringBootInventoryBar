@@ -1,6 +1,7 @@
 package com.prod.GreenValley.wrapper;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -16,6 +17,7 @@ public class TransactionRequest {
     private BigDecimal totalAmount;
     private BigDecimal discountAmount;
     private BigDecimal discount;
+    private LocalDate transctionDate;
     private List<TransactionItemRequest> items;
     
 }

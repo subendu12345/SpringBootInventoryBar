@@ -80,6 +80,7 @@ public class TransctionController {
         }
         trns.setTransId(transction.getId());
         trns.setDiscount(transction.getDiscount());
+        trns.setTransctionDate(transction.getTransctionDate());
         trns.setDiscountAmount(transction.getDiscountAmount());
         trns.setTableNo(transction.getTableNo());
         trns.setTotalAmount(transction.getTotalAmount());

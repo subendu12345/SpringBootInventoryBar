@@ -110,7 +110,7 @@
                 printWindow.document.write('</style>');
                 printWindow.document.write('</head><body>');
                 printWindow.document.write('<div style="padding: 10px;">');
-                printWindow.document.write('<h4 style="margin-bottom: 10px;">Green Valley Restaurant cum Bar:: Gokhurpal :: Nayagram :: Jhargram Licence no: 23/2024/0002</h4>');
+                printWindow.document.write('<p style="margin-bottom: 10px;">Green Valley Restaurant cum Bar <br>Gokhurpal :: Nayagram :: Jhargram <br>Licence no: 23/2024/0002</p>');
                 printWindow.document.write('<p><strong>Transaction ID:</strong> ' + transaction.transId + '</p>');
                 printWindow.document.write('<p><strong>Table No:</strong> ' + transaction.tableNo + '</p>');
                 printWindow.document.write('<p><strong>Date:</strong> ' + transaction.transctionDate || '' + '</p>');
@@ -123,13 +123,13 @@
                 if (transaction.items && transaction.items.length > 0) {
                     printWindow.document.write('<div style="margin-top: 10px;">');
                     transaction.items.forEach(item => {
-                        if(item.size !=0 && item.size == 375){
-                             printWindow.document.write(`<p> ${item.productName} 60ml x 6 = 360ml</p>`);
-                             printWindow.document.write(`<p> ${item.productName} 15ml x 1 = 15ml</p>`);
-                        }else{
+                        if (item.size != 0 && item.size == 375) {
+                            printWindow.document.write(`<p> ${item.productName} 60ml x 6 = 360ml</p>`);
+                            printWindow.document.write(`<p> ${item.productName} 15ml x 1 = 15ml</p>`);
+                        } else {
                             printWindow.document.write(`<p> ${item.productName} ${item.size == 0 ? item.extraSize : item.size}${item.isExtraItem ? '' : 'ml'} x ${item.quantity} = ${item.isExtraItem ? item.extraSize : (item.size * item.quantity) + 'ml'}</p>`);
                         }
-                        
+
                     });
                     printWindow.document.write('</div>');
                 } else {
@@ -249,7 +249,7 @@
                     const transactions = await response.json();
                     tempTransctionData = [];
                     tempTransctionData = transactions;
-                    console.log('transactions '+JSON.stringify(transactions))
+                    console.log('transactions ' + JSON.stringify(transactions))
                     getTotalCounterSaleAmount(transactions);
                     renderTranctionTable(transactions)
                 } else {
@@ -257,13 +257,13 @@
                 }
             })
 
-            function getTotalCounterSaleAmount(transactions){
+            function getTotalCounterSaleAmount(transactions) {
                 let totalamount = 0.00;
                 for (const trns of transactions) {
-                    totalamount +=trns.discountAmount;
+                    totalamount += trns.discountAmount;
                 }
 
-                document.getElementById('totalBasSaleAmount').textContent = 'Total Sell: ₹ '+ totalamount;
+                document.getElementById('totalBasSaleAmount').textContent = 'Total Sell: ₹ ' + totalamount;
 
             }
 
@@ -305,6 +305,8 @@
                 left: 0;
                 top: 0;
             }
+
+            
         }
     </style>
 </div>
