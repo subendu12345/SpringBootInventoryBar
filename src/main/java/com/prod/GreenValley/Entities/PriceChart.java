@@ -19,5 +19,8 @@ public class PriceChart {
 
     @Column(name = "price")
     private Integer price;
+
+    @Column(name = "is_beer")
+    private Boolean isBeer;
     
 }

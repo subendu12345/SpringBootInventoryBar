@@ -5,6 +5,7 @@ public class PriceChartDTO {
     private String productName;
     private Integer size;
     private Integer price;
+    private Boolean isBeer;
 
 
     public PriceChartDTO(Long id, String productName, Integer size, Integer price){
@@ -40,4 +41,14 @@ public class PriceChartDTO {
     public void setPrice(Integer price) {
         this.price = price;
     }
+
+    public Boolean getIsBeer() {
+        return isBeer;
+    }
+
+    public void setIsBeer(Boolean isBeer) {
+        this.isBeer = isBeer;
+    }
+
+    
 }

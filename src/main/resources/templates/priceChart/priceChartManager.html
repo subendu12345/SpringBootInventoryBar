@@ -131,6 +131,7 @@
             // Dummy data for 10 products, simulating a backend API call
             let productUniqeNames = [];
             let priceChartData = [];
+            let myPriceChartDataMap = {};
             // Function to render the table with provided data
 
 
@@ -254,14 +255,14 @@
                 // In a real application, you would send a DELETE request to your backend here
 
                 try {
-                    let deleteRes = await fetch(`/api/pricechart/delete/${id}`,{method:"DELETE"})
-                    console.log('deleteRes '+ deleteRes)
+                    let deleteRes = await fetch(`/api/pricechart/delete/${id}`, { method: "DELETE" })
+                    console.log('deleteRes ' + deleteRes)
                     fetchPriceChartList();
-                    showToast("Success!","Price Deleted.", "success")
+                    showToast("Success!", "Price Deleted.", "success")
                 } catch (error) {
                     showToast("Error!", JSON.stringify(error), "error")
                 }
-                
+
                 console.log(`Deleting record with ID: ${id}`);
             }
 
@@ -295,7 +296,7 @@
                 const uniqueData = productUniqeNames.filter(
                     (item, index, self) =>
                         index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
-                    );
+                );
                 const sortedData = uniqueData.sort((a, b) =>
                     a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
                 );
@@ -304,6 +305,12 @@
                 let formHtml = '';
                 let productNameIndex = 111;
                 productUniqeNames.forEach(product => {
+                    let productSizeKey = ''
+                    console.log('product ae ' + product.name)
+                    if (product.name && product.name.includes('(Beer)')) {
+                        productSizeKey = product.name.split("(Beer)")[1].split(" - ")[0].trim() + product.name.split("- ")[1].trim()
+                    }
+
                     formHtml += `
                     <div class="card bg-light mb-3">
                         <div class="card-header fw-bold">${product.name}</div>
@@ -314,28 +321,59 @@
                             <div class="row">
                                  ${product.name.includes("(Beer) ") ? `
                                  <div class="col-md-6 mb-3">
-                                    <label for="price-${product.name}" class="form-label">${product.name}ml</label>
+                                    <label style="font-weight: 500;" for="price-${product.name}" class="form-label">${product.name}ml</label>
                                     <input type="hidden" name="size" value="${product.name}">
-                                    <input type="number" step="0.01" class="form-control" id="price-${product.id}-${product.name}" name="${product.name}" required>
+                                    <input type="number" step="0.01" class="form-control" id="price-${product.id}-${product.name}" 
+                                        value="${myPriceChartDataMap[productSizeKey] ? parseInt(myPriceChartDataMap[productSizeKey].price) : null}"
+                                        name="${product.name}" required>
                                     <div class="invalid-feedback">
                                         Please provide a valid price for ${product.name}.
                                     </div>
                                 </div>
                                  ` : `
-                                 <div class="col-md-6 mb-3">
-                                    <label for="price-${product.name}-30ml" class="form-label">Price (30ml)</label>
+                                 <div class="col-md-2 mb-3">
+                                    <label style="font-weight: 500;" for="price-${product.name}-30ml" class="form-label">Price (30ml)</label>
                                     <input type="hidden" name="size" value="30">
-                                    <input type="number" step="0.01" class="form-control" id="price-${product.id}-30ml" name="price-30ml" required>
+                                    <input type="number" step="0.01" class="form-control" id="price-${product.id}-30ml" name="price-30ml"
+                                    value="${myPriceChartDataMap[product.name + '30'] ? parseInt(myPriceChartDataMap[product.name + '30'].price) : null}"  required>
                                     <div class="invalid-feedback">
                                         Please provide a valid price for 30ml.
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="price-${product.id}-60ml" class="form-label">Price (60ml)</label>
+                                <div class="col-md-2 mb-3">
+                                    <label style="font-weight: 500;" for="price-${product.id}-60ml" class="form-label">Price (60ml)</label>
                                     <input type="hidden" name="size" value="60">
-                                    <input type="number" step="0.01" class="form-control" id="price-${product.id}-60ml" name="price-60ml" required>
+                                    <input type="number" step="0.01" class="form-control" id="price-${product.id}-60ml" name="price-60ml"
+                                      value="${myPriceChartDataMap[product.name + '60'] ? parseInt(myPriceChartDataMap[product.name + '60'].price) : null}" required>
                                     <div class="invalid-feedback">
                                         Please provide a valid price for 60ml.
+                                    </div>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label style="font-weight: 500;" for="price-${product.id}-90ml" class="form-label">Price (90ml)</label>
+                                    <input type="hidden" name="size" value="90">
+                                    <input type="number" step="0.01" class="form-control" id="price-${product.id}-90ml" name="price-90ml"
+                                      value="${myPriceChartDataMap[product.name + '90'] ? parseInt(myPriceChartDataMap[product.name + '90'].price) : null}" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a valid price for 90ml.
+                                    </div>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label style="font-weight: 500;" for="price-${product.id}-180ml" class="form-label">Price (180ml)</label>
+                                    <input type="hidden" name="size" value="180">
+                                    <input type="number" step="0.01" class="form-control" id="price-${product.id}-180ml" name="price-180ml"
+                                      value="${myPriceChartDataMap[product.name + '180'] ? parseInt(myPriceChartDataMap[product.name + '180'].price) : null}" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a valid price for 180ml.
+                                    </div>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label style="font-weight: 500;" for="price-${product.id}-375ml" class="form-label">Price (375ml)</label>
+                                    <input type="hidden" name="size" value="375">
+                                    <input type="number" step="0.01" class="form-control" id="price-${product.id}-375ml" name="price-375ml"
+                                      value="${myPriceChartDataMap[product.name + '375'] ? parseInt(myPriceChartDataMap[product.name + '375'].price) : null}" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a valid price for 375ml.
                                     </div>
                                 </div>
                                  `}
@@ -388,6 +426,9 @@
                     } else {//handle other product
                         const price30mlInput = document.getElementById(`price-${product.id}-30ml`);
                         const price60mlInput = document.getElementById(`price-${product.id}-60ml`);
+                        const price90mlInput = document.getElementById(`price-${product.id}-90ml`);
+                        const price180mlInput = document.getElementById(`price-${product.id}-180ml`);
+                        const price375mlInput = document.getElementById(`price-${product.id}-375ml`);
                         console.log('---------------------- ')
                         let productValid = true;
 
@@ -405,6 +446,32 @@
                             productValid = false;
                         }
 
+
+                        // Validate 90ml price
+                        if (!price90mlInput.value.trim() || isNaN(price90mlInput.value.trim())) {
+                            price90mlInput.classList.add('is-invalid');
+                            isValid = false;
+                            productValid = false;
+                        }
+
+
+                        // Validate 180ml price
+                        if (!price180mlInput.value.trim() || isNaN(price180mlInput.value.trim())) {
+                            price180mlInput.classList.add('is-invalid');
+                            isValid = false;
+                            productValid = false;
+                        }
+
+
+                        // Validate 375ml price
+                        if (!price375mlInput.value.trim() || isNaN(price375mlInput.value.trim())) {
+                            price375mlInput.classList.add('is-invalid');
+                            isValid = false;
+                            productValid = false;
+                        }
+
+
+
                         // If the product fields are valid, add them to the array
                         if (productValid) {
                             priceCharts.push({
@@ -416,6 +483,22 @@
                                 productName: product.name,
                                 size: 60,
                                 price: parseFloat(price60mlInput.value.trim())
+                            });
+
+                            priceCharts.push({
+                                productName: product.name,
+                                size: 90,
+                                price: parseFloat(price90mlInput.value.trim())
+                            });
+                            priceCharts.push({
+                                productName: product.name,
+                                size: 180,
+                                price: parseFloat(price180mlInput.value.trim())
+                            });
+                            priceCharts.push({
+                                productName: product.name,
+                                size: 375,
+                                price: parseFloat(price375mlInput.value.trim())
                             });
                         }
                     }
@@ -441,8 +524,18 @@
             async function fetchPriceChartList() {
                 const res = await fetch("/api/pricehart/get");
                 priceChartData = await res.json();
+                convertPriceChartObject(priceChartData)
                 renderTable(priceChartData)
                 console.log('priceChart list ' + JSON.stringify(priceChartData))
+            }
+
+            function convertPriceChartObject(priceChartData) {
+                myPriceChartDataMap = priceChartData.reduce((acc, item) => {
+                    acc[item.productName.trim() + item.size] = item;
+                    return acc;
+                }, {});
+
+                //console.log('myPriceChartDataMap '+ JSON.stringify(myPriceChartDataMap))
             }
 
             async function saveBulkPriceChart(priceChartList) {
@@ -455,7 +548,7 @@
                                 body: JSON.stringify(priceChartList)
                             }
                         )
-
+                            showToast("Success!","Bulk Record successfully Saved..","success")
                         console.log('res------------> ' + JSON.stringify(res));
                     } catch (error) {
                         showToast("Error on save record ", JSON.stringify(error), 'error')

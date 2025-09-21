@@ -14,7 +14,7 @@ public interface PriceChartRepo extends JpaRepository<PriceChart, Long> {
     List<PriceChart> findByNameContainingIgnoreCase(String name);
 
 
-    @Query(value = "SELECT * FROM price_chart", nativeQuery = true)
+    @Query(value = "SELECT * FROM price_chart LIMIT 3", nativeQuery = true)
     List<PriceChart> getFirstTenRecords();
 
 }
