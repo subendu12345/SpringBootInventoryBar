@@ -522,7 +522,7 @@
 
 
             async function fetchPriceChartList() {
-                const res = await fetch("/api/pricehart/get");
+                const res = await fetch("/api/pricehart/getall");
                 priceChartData = await res.json();
                 convertPriceChartObject(priceChartData)
                 renderTable(priceChartData)

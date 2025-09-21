@@ -17,4 +17,5 @@ public interface PriceChartRepo extends JpaRepository<PriceChart, Long> {
     @Query(value = "SELECT * FROM price_chart LIMIT 3", nativeQuery = true)
     List<PriceChart> getFirstTenRecords();
 
+
 }

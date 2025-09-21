@@ -62,6 +62,20 @@ public class PriceChartService {
         return priceChartDTOs;
     }
 
+    public List<PriceChartDTO> getAllPriceChart(){
+        List<PriceChartDTO> priceChartDTOs = new ArrayList<>();
+        for (PriceChart pc : priceChartRepo.findAll()) {
+            PriceChartDTO chartDTO = new PriceChartDTO();
+            chartDTO.setId(pc.getId());
+            chartDTO.setProductName(pc.getProductName());
+            chartDTO.setPrice(pc.getPrice());
+            chartDTO.setSize(pc.getSize());
+            priceChartDTOs.add(chartDTO);
+        }
+
+        return priceChartDTOs;
+    }
+
 
     public List<PriceChartDTO> getSearchResult(String searchStr){
         List<PriceChartDTO> priceChartDTOs = new ArrayList<>();

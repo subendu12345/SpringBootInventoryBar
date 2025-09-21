@@ -34,8 +34,13 @@ public class PriceChartRESTApi {
     }
 
     @GetMapping("/pricehart/get")
-    public List<PriceChartDTO> getAllPriceChart(){
+    public List<PriceChartDTO> findLimitedPricechart(){
         return priceChartService.findAllPriceChart();
+    }
+
+    @GetMapping("/pricehart/getall")
+    public List<PriceChartDTO> getAllPriceChart(){
+        return priceChartService.getAllPriceChart();
     }
 
     @GetMapping("/priceChart/search/{searchParam}")
