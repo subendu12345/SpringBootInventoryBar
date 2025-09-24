@@ -1,5 +1,7 @@
 package com.prod.GreenValley.Entities;
 
+import java.time.LocalDate;
+
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -30,7 +32,17 @@ public class TransctionItem {
     @Column(name="is_extra_item")
     private Boolean isExtraItem;
 
+    @Temporal(TemporalType.DATE)
+    @Column(name = "created_date")
+    private LocalDate createdDate;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "transction_id", nullable = false)
     private Transction transction;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdDate = LocalDate.now();
+       
+    }
 }
