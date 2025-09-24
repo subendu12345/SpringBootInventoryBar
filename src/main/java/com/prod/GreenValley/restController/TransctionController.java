@@ -109,6 +109,14 @@ public class TransctionController {
 
     }
 
+    @GetMapping("/get/report/date")
+    public List<Object> getTransctionReport(
+        @RequestParam LocalDate startDate,
+        @RequestParam LocalDate endDate
+    ){
+        return transactionService.getTransctionReportByTimeFrame(startDate, endDate);
+    }
+
 
     
     @GetMapping("/get/detail/end-date")

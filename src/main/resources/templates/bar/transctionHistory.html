@@ -2,19 +2,22 @@
 
     <div class="container print-area">
         <div class="row my-4 align-items-end">
-            <div class="col-md-3 mb-3">
+            <div class="col-md-2 mb-3">
+                <span class="badge bg-success fs-6" style="padding-bottom: 10px;" id="totalBasSaleAmount"></span>
+            </div>
+            <div class="col-md-2 mb-3">
                 <label for="startDateFilter" class="form-label fw-bold">Start Date</label>
                 <input type="date" class="form-control" id="startDateFilter">
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-2 mb-3">
                 <label for="endDateFilter" class="form-label fw-bold">End Date</label>
                 <input type="date" class="form-control" id="endDateFilter">
             </div>
             <div class="col-md-2 mb-3">
                 <button class="btn btn-primary w-100" id="getSaleDetail">Get Details</button>
             </div>
-            <div class="col-md-2 mb-3">
-                <span class="badge bg-success fs-6" style="padding-bottom: 10px;" id="totalBasSaleAmount"></span>
+            <div class="col-md-3 mb-3">
+                <button class="btn btn-primary w-100" id="reportDownloadButton">Download Report</button>
             </div>
         </div>
         <table class="table table-striped table-hover">
@@ -80,6 +83,7 @@
             const loadingSpinner = document.getElementById('loading-spinner');
             const endDateInput = document.getElementById('endDateFilter');
             const startDateInput = document.getElementById('startDateFilter');
+            const reportDownloadButton = document.getElementById('reportDownloadButton')
             let tempTransctionData = [];
 
 
@@ -267,6 +271,60 @@
 
             }
 
+            reportDownloadButton.addEventListener("click", async () => {
+                //t.transction_date, product_name, size, quantity, price, sum(size * quantity) as totaVolumeSale, SUM(price*quantity) as totalSalePrice 
+                if (startDateInput.value && endDateInput.value) {
+                    const response = await fetch(`/api/transction/get/report/date?startDate=${startDateInput.value}&endDate=${endDateInput.value}`)
+                    let counterSaleList = await response.json();
+                    if(counterSaleList && counterSaleList.length > 0){
+                        makeRawDataToExcelSheet(counterSaleList)
+                    }else{
+                        showToast("Record not found!", "Record not found.","primary")
+                    }
+                } else {
+                    showToast("Start/End Date missing..", "Please select start date and End date for download report.", "warning")
+                }
+
+            })
+
+            function makeRawDataToListOfObject(data) {
+                let tempData = [];
+                for (const raw of data) {
+                    tempData.push({
+                        'date': raw[0],
+                        'productName': raw[1],
+                        'size': raw[2],
+                        'quantity': raw[3],
+                        'price': raw[4],
+                        'totaVolumeSale': raw[5],
+                        'totalSalePrice': raw[6],
+                    })
+                }
+
+                return tempData;
+            }
+
+            function makeRawDataToExcelSheet(data) {
+                let objectListData = makeRawDataToListOfObject(data)
+                const worksheet = XLSX.utils.json_to_sheet(objectListData, {
+                    header: ["date", "productName", "size", "quantity", "price", "totaVolumeSale", "totalSalePrice"]
+                });
+
+                // 2. Override the default headers with user-friendly names.
+                // This is an optional step to make the Excel file more readable.
+                XLSX.utils.sheet_add_aoa(worksheet, [
+                    ["Date", "Product Name", "Size(ml)", "Quantity", "Price", "Total Volume Sale (ml)", "Total Amount"]
+                ], { origin: "A1" });
+
+                // 3. Create a new workbook and add the worksheet to it.
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Counter Sale Report");
+
+                // 4. Trigger the download using the write function.
+                const fileName = `Counter_Sale_report_${startDateInput.value}_to_${endDateInput.value}.xlsx`;
+                XLSX.writeFile(workbook, fileName);
+            }
+
 
             // Initial fetch of transactions when the page loads
 
@@ -281,6 +339,27 @@
             startDateInput.value = formattedDate;
             endDateInput.value = formattedDate;
             fetchTransactions();
+
+
+
+            function showToast(title, message, type = "primary") {
+                // Get toast elements
+                const toastEl = document.getElementById("basicToast");
+                const toastTitle = document.getElementById("myToastTitle");
+                const toastMessage = document.getElementById("myToastMessage");
+                const header = toastEl.querySelector(".toast-header");
+
+                // Set values
+                toastTitle.textContent = title;
+                toastMessage.textContent = message;
+
+                // Update color (Bootstrap contextual classes)
+                header.className = `toast-header bg-${type} text-light`;
+
+                // Show toast
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show();
+            }
         });
     </script>
 
@@ -306,7 +385,7 @@
                 top: 0;
             }
 
-            
+
         }
     </style>
 </div>

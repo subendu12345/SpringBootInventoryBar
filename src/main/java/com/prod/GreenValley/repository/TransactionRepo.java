@@ -30,5 +30,17 @@ public interface TransactionRepo extends JpaRepository<Transction, Long>{
     
     @Query(value = GET_TOTAL_VOL, nativeQuery = true)
     List<CounterStockInDetail> getTotalTransctionVolume();
+
+    String GET_TRANS_REPORT = """
+        SELECT t.transction_date, product_name, size, quantity, price, sum(size * quantity) as totaVolumeSale, SUM(price*quantity) as totalSalePrice  
+        FROM transction_item ti inner join transction as t on t.id = ti.transction_id
+        WHERE is_extra_item = false
+        AND t.transction_date >= :startDate
+        AND t.transction_date <= :endDate
+        group by t.transction_date, product_name, size, quantity, price;
+            """;
+
+    @Query(value = GET_TRANS_REPORT, nativeQuery = true)
+    List<Object> getTransctionReportByTimeFrame(LocalDate startDate, LocalDate endDate);
     
 }

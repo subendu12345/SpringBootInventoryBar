@@ -83,5 +83,9 @@ public class TransactionService {
             return transctionRepository.filterTransctionByStartEndDate(startDate, endDate);
         }
     }
+
+    public List<Object> getTransctionReportByTimeFrame(LocalDate startDate, LocalDate endDate){
+        return transctionRepository.getTransctionReportByTimeFrame(startDate, endDate);
+    }
     
 }
