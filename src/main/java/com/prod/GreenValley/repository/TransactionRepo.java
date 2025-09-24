@@ -37,7 +37,6 @@ public interface TransactionRepo extends JpaRepository<Transction, Long>{
         WHERE is_extra_item = false
         AND t.transction_date >= :startDate
         AND t.transction_date <= :endDate
-        group by t.transction_date, product_name, size, quantity, price
         order by product_name desc;
             """;
 
